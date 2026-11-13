@@ -1,0 +1,36 @@
+{
+  "rules_version": "review_flag_rules_v1",
+  "frozen": "2026-11-08",
+  "status": "EXPLORATORY. Rules were written after inspecting the outputs of this 10-case pilot. They are NOT prospectively defined evaluation criteria and must not be reported as such. They only prioritise human review; no flag is a confirmed error unless stated by kind.",
+  "rules": {
+    "incorrect_input_description": {
+      "kind": "input_description_error",
+      "meaning": "The model describes the supplied model input incorrectly. This is checkable against the logged input (e.g. 85 images supplied), so it is an incorrect description of the input, not a clinical judgement.",
+      "pattern_regex": "\\b(single|one)\\s+(axial\\s+)?(slice|image|section)\\b",
+      "pattern_flags": "IGNORECASE",
+      "fields_searched": ["description", "limitations"],
+      "applies_when": "number of supplied images > 1",
+      "review_finding": "limitations"
+    },
+    "laterality_vs_reference_annotation": {
+      "kind": "review_flag",
+      "meaning": "Model laterality differs from the side(s) carrying the reference infection annotation. The annotation is a COVID-19 infection annotation, not an exhaustive opacity annotation, so this is a review flag, not a confirmed model error.",
+      "unilateral_fraction_threshold": 0.05,
+      "reference_side_rule": "smaller side / (left + right annotated volume) < threshold -> reference 'left' or 'right' (larger side); otherwise 'bilateral'",
+      "model_values_checked": ["bilateral", "left", "right"],
+      "review_finding": "distribution_laterality"
+    },
+    "text_changes_with_image_processor": {
+      "kind": "processing_sensitivity",
+      "meaning": "Raw model text differs between the baseline run and a run that differs only in the image processor implementation (same images, prompt and decoding). Only evaluable for cases present in both runs.",
+      "comparison": "stripped raw text, exact string inequality",
+      "review_finding": "description"
+    },
+    "fields_change_with_image_processor": {
+      "kind": "processing_sensitivity",
+      "meaning": "Structured fields (assessability, opacity_presence, distribution) differ between the two image-processor runs.",
+      "fields_compared": ["assessability", "opacity_presence", "distribution"],
+      "review_finding": "opacity_presence"
+    }
+  }
+}

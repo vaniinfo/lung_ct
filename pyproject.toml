@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0", "setuptools-scm>=8.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lung-ct-research"
+version = "0.1.0"
+description = "Local lung CT research pipeline: ingestion, QC, segmentation, LVLM inference, reporting"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=1.24",
+    "pandas>=2.0",
+    "SimpleITK>=2.3",
+    "nibabel>=5.0",
+    "pydicom>=2.4",
+    "scipy>=1.11",
+    "scikit-image>=0.22",
+    "networkx>=3.0",
+    "skan>=0.13",
+    "matplotlib>=3.7",
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+    "typer>=0.9",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0", "pytest-cov"]
+
+[project.scripts]
+lungct = "lung_ct.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,43 @@
+{
+  "config_version": "medgemma_ct_v1",
+  "frozen": true,
+  "upstream": {
+    "notebook": "https://github.com/Google-Health/medgemma/blob/ea92d0f17e7ed56c16773d6a23d0a27d7e90b274/notebooks/high_dimensional_ct_hugging_face.ipynb",
+    "notebook_commit": "ea92d0f17e7ed56c16773d6a23d0a27d7e90b274",
+    "notebook_local_copy": "docs/upstream/medgemma_high_dimensional_ct_hugging_face_ea92d0f.ipynb",
+    "notebook_sha256": "75f527afbe81c9641490a7b2223788309d37589315779129257d625ebcd7efb1",
+    "note": "Notebook markdown lists the green window as 135..215 HU; the notebook code uses (-135, 215). The code is followed here."
+  },
+  "model": {
+    "model_id": "google/medgemma-1.5-4b-it",
+    "revision": "91850547d9f0b2fdd21aa7c5f4f3d1a8a52c243b",
+    "dtype": "bfloat16",
+    "device_map": "auto",
+    "offload_buffers": true,
+    "use_fast_processor": true,
+    "quantization": null
+  },
+  "representation": {
+    "name": "official_notebook_baseline",
+    "max_slices": 85,
+    "sampling": "notebook_uniform: index = int(round(i / max_slices * (n - 1))) for i in 1..max_slices when n > max_slices, else all slices",
+    "slice_axis": "axial",
+    "slice_order": "superior_to_inferior",
+    "in_plane_display": "radiological: rows anterior->posterior, columns patient right->left (DICOM LPS pixel convention)",
+    "resample": false,
+    "rgb_windows_hu": [[-1024, 1024], [-135, 215], [0, 80]],
+    "image_format": "jpeg",
+    "jpeg_quality": 75,
+    "slice_label_template": "SLICE {n}"
+  },
+  "prompt": {
+    "version": "v1",
+    "instruction": "You are analyzing axial slices from a single chest CT examination. The slices are sampled at uniform intervals across the scanned volume and are ordered from superior (head) to inferior (feet). Images are shown in radiological convention: the patient's right is on the image left and anterior is at the top. Please review the slices provided below carefully.",
+    "query": "\n\nBased on the visual evidence in the slices provided above: Describe the pulmonary findings visible in this CT representation. State whether pulmonary opacities are present, absent, or indeterminate, and describe their broad distribution only when supported by the images. State any limitations in image coverage or assessability. Do not infer disease etiology, chronicity, or interval change from this single examination. Do not invent quantitative measurements.\n\nReturn only a JSON object with exactly these keys and allowed values:\n{\n  \"assessability\": \"assessable\" | \"limited\" | \"not_assessable\",\n  \"opacity_presence\": \"present\" | \"absent\" | \"indeterminate\",\n  \"distribution\": {\n    \"laterality\": \"bilateral\" | \"right\" | \"left\" | \"not_applicable\" | \"indeterminate\",\n    \"craniocaudal\": \"upper_predominant\" | \"middle_predominant\" | \"lower_predominant\" | \"no_predominance\" | \"not_applicable\" | \"indeterminate\",\n    \"axial\": \"peripheral\" | \"central\" | \"mixed\" | \"not_applicable\" | \"indeterminate\"\n  },\n  \"description\": \"<short description of the visible pulmonary findings>\",\n  \"limitations\": [\"<limitation>\", ...]\n}\nUse \"not_applicable\" for distribution fields when opacities are absent."
+  },
+  "generation": {
+    "do_sample": false,
+    "max_new_tokens": 1024,
+    "batch_size": 1
+  }
+}

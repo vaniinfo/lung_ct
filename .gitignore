@@ -1,0 +1,35 @@
+# Data and model weights
+data/
+models/
+runs/
+
+# Environments
+environments/*/
+.venv*/
+__pycache__/
+*.pyc
+*.pyo
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Secrets
+.env
+*.token
+credentials.*
+
+# Large logs
+*.log
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Tool caches
+.uv_cache/
+.pytest_cache/
