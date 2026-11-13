@@ -2,7 +2,7 @@
 
 Local, reproducible research pipeline for public 3D chest CT: ingestion, geometry/HU QC,
 lung segmentation, volume quantification, CT-capable LVLM inference, reviewable reports.
-Research use only - no diagnostic or clinical validation claims. See `CLAUDE.md` and `docs/STATUS.md`.
+Research use only - no diagnostic or clinical validation claims. See `PROJECT_GUIDELINES.md` and `docs/STATUS.md`.
 
 ## Setup
 
@@ -45,7 +45,7 @@ pip install -e ".[test]"
 
 ### GPU environments (Windows + NVIDIA only)
 
-Each GPU stage has its own environment, run as separate processes (see `CLAUDE.md`).
+Each GPU stage has its own environment, run as separate processes (see `PROJECT_GUIDELINES.md`).
 The versions below are the ones installed in the tested environments. The commands are
 reconstructed from those versions and use [uv](https://docs.astral.sh/uv/).
 
@@ -109,7 +109,7 @@ doi:[10.5281/zenodo.3757476](https://doi.org/10.5281/zenodo.3757476).
 
 **None of these datasets has been downloaded or analysed.** They are options for later work.
 Details were checked against official pages on 2026-11-13. Recheck the licence and access terms
-before downloading anything. Any download must fit the data budget in `CLAUDE.md`
+before downloading anything. Any download must fit the data budget in `PROJECT_GUIDELINES.md`
 (at most 20 GB of new data), so large sets would be subsets only.
 
 | Dataset | What it would add | Size / access | Licence | Caveats |
@@ -117,7 +117,7 @@ before downloading anything. Any download must fit the data budget in `CLAUDE.md
 | [ATM'22](https://atm22.grand-challenge.org/) (Airway Tree Modeling) | Airway reference labels by 3 radiologists: 300 training + 50 validation CTs (150 test cases withheld). Fills the Phase 5 gap, since we have no airway reference. | Open on Zenodo, no registration: [TrainBatch1](https://zenodo.org/records/7949582) 32.3 GB, [TrainBatch2](https://zenodo.org/records/7949571) 24.7 GB. The challenge site's dataset page needs a login. | CC BY 4.0 (labels); source images keep their own terms | Many cases come from LIDC-IDRI (CaseInfo CSV maps them). EXACT'09 images must be fetched separately. Discard `ATM_164` (misaligned label). |
 | [AeroPath](https://zenodo.org/records/10069289) | 27 CTA scans with airway and lung masks, with pathology (tumours, emphysema, sarcoidosis). A small first airway validation set that fits the budget. | Zenodo / [Hugging Face](https://huggingface.co/datasets/andreped/AeroPath), NIfTI | CC BY 4.0 (dataset); MIT (code) | Contrast-enhanced CTA, not the non-contrast CT we use now |
 | [AIIB23](https://codalab.lisn.upsaclay.fr/competitions/13238) | Airway labels in fibrotic interstitial lung disease (ILD), plus a survival task. Fits the later ILD work. | Download links are emailed after challenge registration; test set not public | Not stated on the pages checked | Published case counts and splits disagree across sources |
-| [CT-RATE](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE) | CTs paired with radiology reports, plus 18 abnormality labels (including bronchiectasis and interlobular septal thickening). Planned E4 experiment. | Gated on Hugging Face; 25,692 volumes from 21,304 patients, about 21.3 TB in total | CC BY-NC-SA 4.0; no redistribution | Small subset only (CLAUDE.md: do not mirror in full). Labels come from reports, not image annotations. |
+| [CT-RATE](https://huggingface.co/datasets/ibrahimhamamci/CT-RATE) | CTs paired with radiology reports, plus 18 abnormality labels (including bronchiectasis and interlobular septal thickening). Planned E4 experiment. | Gated on Hugging Face; 25,692 volumes from 21,304 patients, about 21.3 TB in total | CC BY-NC-SA 4.0; no redistribution | Small subset only (project guidelines: do not mirror in full). Labels come from reports, not image annotations. |
 | [CT Images in COVID-19](https://www.cancerimagingarchive.net/collection/ct-images-in-covid-19/) (TCIA) + [COVID-19-20](https://covid-segmentation.grand-challenge.org/Data/) lesion masks | Many more COVID CTs (632 subjects): 199 training CTs with lesion masks. Would extend our 10 HU cases. | 14.71 GB NIfTI via Aspera | CC BY 4.0 (images); CC0 (challenge masks) | Masks label COVID lesions, not GGO or fibrosis. Check HU scaling per case. |
 | [MosMedData COVID19_1110](https://mosmed.ai/datasets/covid19_1110) | 1,110 COVID CTs with severity grades CT-0 to CT-4; 50 with GGO/consolidation masks | Public download | CC BY-NC-ND 3.0 | No redistribution of modified data. Severity classes are heavily unbalanced (only 2 CT-4). |
 | [LCTSC 2017](https://www.cancerimagingarchive.net/collection/lctsc/) (TCIA) | 60 CTs with expert left/right lung contours. A second lung-segmentation reference. | 5.15 GB DICOM-RT via TCIA Data Retriever | CC BY 3.0 | Radiotherapy-planning CTs (oncology patients) |

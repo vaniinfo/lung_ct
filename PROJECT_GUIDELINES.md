@@ -1,4 +1,4 @@
-# Lung CT Research - Claude Code Instructions
+# Lung CT Research - Project Guidelines
 
 ## Project Scope
 Reproducible local research pipeline: ingest public 3D chest CT, validate geometry/intensity,

@@ -4,7 +4,7 @@ Last updated: 2026-11-08
 
 ## Phase 0: Environment Bootstrap
 - **Status**: DONE
-- **Implemented**: Hardware detection, project structure, CLAUDE.md, `.venv` (core) with CUDA PyTorch
+- **Implemented**: Hardware detection, project structure, PROJECT_GUIDELINES.md, `.venv` (core) with CUDA PyTorch
 - **Tested**: RTX 3090 24GB visible; `torch 2.14.1+cu126`, `torch.cuda.is_available() == True`; 13 unit tests pass (`pytest -q`)
 - **Blocked**: none
 - **Done**: separate `environments/segmentation` and `environments/vlm` environments in use (Phases 2-3)
@@ -88,7 +88,7 @@ Last updated: 2026-11-08
 
 ## Phase 5: Airway Extension (Python)
 - **Status**: DONE for scope step 1 (lung volumes, airway centrelines, branch lengths, tortuosity) on the 10 HU cases. Unvalidated measurements.
-- **Plan change (2026-11-08, user decision)**: MATLAB is unavailable; MATLAB and AirQuant removed from implementation dependencies (plan Section 11 and CLAUDE.md updated). Python pipeline: nibabel/SimpleITK geometry, scikit-image skeletonisation, Skan branch graph, explicit definitions. AirQuant = methodological reference only; outputs labelled "lung_ct airway tree v2 ... NOT AirQuant". Diameter/tapering = later validated extension; wall thickness deferred.
+- **Plan change (2026-11-08, user decision)**: MATLAB is unavailable; MATLAB and AirQuant removed from implementation dependencies (original project plan and PROJECT_GUIDELINES.md updated). Python pipeline: nibabel/SimpleITK geometry, scikit-image skeletonisation, Skan branch graph, explicit definitions. AirQuant = methodological reference only; outputs labelled "lung_ct airway tree v2 ... NOT AirQuant". Diameter/tapering = later validated extension; wall thickness deferred.
 - **Implemented** (`lung_ct.airway.tree`, `scripts/airway_tree.py`; core env + scikit-image 0.26, skan 0.13.1, SimpleITK 2.5.7):
   - Input: predicted TotalSegmentator `lung_airways` (includes trachea); canonical RAS; largest 26-component, fragments reported; isotropic nearest-neighbour resampling
   - Lee 3D skeleton -> `skan.Skeleton(spacing=iso)`; Skan paths give pixel paths, raw path length (`skan_path_length_mm`) and endpoint coordinates
