@@ -88,6 +88,10 @@ downloaded or analysed.
 |---|---|---|---|
 | COVID-19 CT Lung and Infection Segmentation (COVID-19-CT-Seg) | Zenodo record [3757476](https://zenodo.org/records/3757476); benchmark: [JunMa11/COVID-19-CT-Seg-Benchmark](https://github.com/JunMa11/COVID-19-CT-Seg-Benchmark) | 20 COVID-19 chest CT volumes (NIfTI) with expert left/right lung masks and infection masks (~1.1 GB) | CC BY 4.0 (per Zenodo record, checked 2026-11-13) |
 
+**Example results:** [docs/RESULTS_COVID19_CT_SEG.md](docs/RESULTS_COVID19_CT_SEG.md) shows images
+and measurements from this dataset: lung and infection masks, predicted lobes, airway tree,
+and lung volumes, Dice and airway metrics for all 10 HU cases.
+
 The 20 cases originally come from two public sources, and the difference matters for analysis:
 
 - `coronacases_001`-`010` (10 cases): originally from coronacases.org; intensities are in HU.
