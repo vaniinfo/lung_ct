@@ -147,6 +147,8 @@ The closest options are the CT-RATE report-derived bronchiectasis label, PatchCh
 
 ## Phase 1: Data
 
+**In plain words:** download 20 public chest CT scans, then check each one is usable: the image size and orientation are correct, left and right are not swapped, and the pixel values are real CT density units (HU) rather than a picture brightened for display.
+
 ```bash
 python scripts/download_covid_ct.py      # COVID-19-CT-Seg (Zenodo 3757476) -> data/raw/covid_ct/
 python scripts/process_first_case.py     # E0: QC + reference volumes for coronacases_001 -> runs/E0_*
@@ -158,6 +160,8 @@ and `summary.csv`. Volumes flagged `hu_valid=False` (the 10 `radiopaedia_*` case
 display-scaled) must be excluded from any HU-dependent analysis.
 
 ## Phase 2: Segmentation (TotalSegmentator)
+
+**In plain words:** a pretrained AI tool outlines the lungs, lung lobes and airways on each scan. We then compare its lung outlines with outlines drawn by experts to see how closely they match, and measure lung volumes in millilitres.
 
 Segmentation runs in its own environment; evaluation runs in the core `.venv`.
 Weights live in `models/totalsegmentator` (`TOTALSEG_HOME_DIR`, usage statistics disabled).
@@ -171,6 +175,8 @@ python scripts/evaluate_segmentation.py --seg-run runs/P2_seg_10cases_<ts>
 ```
 
 ## Phase 3: MedGemma 1.5 4B CT inference (vlm env)
+
+**In plain words:** a medical AI model that can read images and write text looks at slices from each scan and writes a short structured description. We save exactly what it was shown and exactly what it said, so a doctor can check it later.
 
 Requires accepting the model terms at https://huggingface.co/google/medgemma-1.5-4b-it with
 the Hugging Face account whose token is used (`HF_TOKEN` env var). Weights are pinned
@@ -195,6 +201,8 @@ parsing), `vlm_result.json`, `vlm_parsed.json` (schema-valid only). Run: `run_ma
 
 ## Phase 4: Reviewable outputs (core env)
 
+**In plain words:** gather everything from the earlier phases into one easy-to-read report per patient (pictures, numbers and the AI's text side by side), plus a one-page summary of how the whole batch went.
+
 Assembles finished runs into per-case standalone HTML reports (all images embedded, no
 external assets), batch CSVs, a clinician reviewer sheet and a one-page feasibility summary.
 Reference (expert masks), predicted (TotalSegmentator) and model observation (MedGemma) are
@@ -209,6 +217,8 @@ model_input_sheet.png, overlays/), `batch_results.csv`, `failures.csv`,
 `reviewer_template.csv`, `feasibility_summary.md`, `run_manifest.json`.
 
 ## Phase 5: Lung volumes, airway centrelines, branch lengths, tortuosity (core env)
+
+**In plain words:** turn the outlined airways into a "tree" of thin centre lines, like a map of the branching tubes in the lungs. Then count the branches, measure how long each one is in millimetres, and how curvy it is.
 
 Our own Python implementation ("lung_ct airway tree v2": nibabel/SimpleITK geometry,
 scikit-image 3D skeletonisation, Skan branch graph). It is not AirQuant and makes no claim
@@ -246,6 +256,8 @@ Output `runs/P5_airway_*`: per case `airway_branches.csv`, `airway_summary.json`
 `summary.csv` (lung volumes + tree metrics), `failures.csv`, `run_manifest.json`.
 
 ## Clinician review package
+
+**In plain words:** package the scans and results so a doctor can score them independently, first without seeing the AI's answers, then comparing them, so we get a fair human check of the AI.
 
 Blinded full-CT view, comparison view, blank scoring sheets, model-input contact sheets and a
 central-airway landmark sheet for all HU-valid cases (no model inference):
