@@ -267,6 +267,39 @@ Output `runs/P5_airway_*`: per case `airway_branches.csv`, `airway_summary.json`
 
 **In plain words:** package the scans and results so a doctor can score them independently, first without seeing the AI's answers, then comparing them, so we get a fair human check of the AI.
 
+### What the doctor does
+
+The package is a set of folders sent to the doctor **one round at a time**. Everything opens
+offline in a normal web browser (Chrome or Edge). Nothing has to be installed and nothing goes
+online. The answers go into spreadsheets (CSV files that open in Excel).
+
+| Round | Folder sent | Size | What the doctor does | What comes back |
+|---|---|---|---|---|
+| 1. Blind review | `handoff_1_blinded/` | 1.2 GB | Opens `view1_independent/index.html` and scrolls through all 10 scans, labelled R01-R10 in random order. **No AI answers, expert annotations or case names are shown.** For each scan the doctor records: can it be assessed, are opacities present, which side, where, and any other findings. | `scoring_view1_independent_<reviewer_id>_<YYYYMMDD>.csv` |
+| 2. Comparison | `handoff_2_comparison/` (put next to the round 1 folder) | 194 MB | Now sees, for each case, the AI's exact question and answer, the expert infection annotation over the scan, the automated flags, and the exact 85 images the AI was shown. Marks where they agree with the AI and the type of any error (wrong finding, wrong side, claim not supported by the images, missed finding, wrong description of its own input). Round 1 answers are not edited. If the comparison changes their mind, they note it in `view1_revisions.csv`. | `scoring_view2_comparison.csv` (+ `view1_revisions.csv` if used) |
+| 3. Airway check | `handoff_3_airway/` | 1.5 MB | Looks at 4 of the 10 cases (opens `central_airway_review.html`) and checks that our trachea and main-bronchus length measurements start and end at the right anatomical points, and that the centre line stays inside the airway. Answers yes / no / unsure. | `central_airway_review.csv` |
+
+**Why rounds:** the doctor's first opinion must not be influenced by the AI. Round 2 is sent
+only after the round 1 file comes back. Before that, the analyst records the file's SHA-256
+fingerprint, which proves the round 1 answers were not changed afterwards.
+
+**Sending the folders:** zip each folder and share it with a file-sharing link (e.g. Google
+Drive, OneDrive, Dropbox) or a USB drive. Round 1 is too large for email. The scans are
+public, anonymous research data, but choosing how to share them is the project owner's
+decision. **Never send `analyst_only/`**, because it contains the key that maps R01-R10 back
+to the real cases.
+
+**Decisions still open before sending** (the doctor is told to use usual clinical judgement
+and explain it in the comments until these are settled):
+- What counts as upper, middle or lower zone, and central or peripheral, when describing where
+  findings are.
+- For round 2: whether the AI is judged against the expert infection annotation or against
+  the doctor's own round 1 answers.
+
+Each folder includes its own README with these instructions for the doctor.
+
+### Building the package
+
 Blinded full-CT view, comparison view, blank scoring sheets, model-input contact sheets and a
 central-airway landmark sheet for all HU-valid cases (no model inference):
 
