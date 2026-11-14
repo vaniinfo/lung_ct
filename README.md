@@ -220,6 +220,14 @@ model_input_sheet.png, overlays/), `batch_results.csv`, `failures.csv`,
 
 **In plain words:** turn the outlined airways into a "tree" of thin centre lines, like a map of the branching tubes in the lungs. Then count the branches, measure how long each one is in millimetres, and how curvy it is.
 
+**How [AirQuant](https://airquant.readthedocs.io/en/latest/) helps:** AirQuant is an open-source
+research tool ([GitHub](https://github.com/ashkanpakzad/AirQuant)) built by other researchers
+to measure airways in lung CT scans. Think of it as a published "recipe book": it shows one
+careful, peer-reviewed way to turn an airway outline into a branch tree and measure it. We
+read it to learn good ideas, such as how to define a branch and how to number branch levels
+(generations). We do **not** run AirQuant, copy its code or need MATLAB. We wrote our own
+version in Python, so our numbers are ours and should not be described as AirQuant results.
+
 Our own Python implementation ("lung_ct airway tree v2": nibabel/SimpleITK geometry,
 scikit-image 3D skeletonisation, Skan branch graph). It is not AirQuant and makes no claim
 of equivalence; AirQuant is a methodological reference only. MATLAB is not required.
