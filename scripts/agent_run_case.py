@@ -125,7 +125,7 @@ def main() -> int:
     ap.add_argument("--config", default=None)
     ap.add_argument("--classifier", default=None, metavar="RUNDIR",
                     help="COLIPRI run (scripts/agent_classify.py); step 2 is marked not run without it")
-    ap.add_argument("--checklist-config", default="configs/checklist_v3_8.json",
+    ap.add_argument("--checklist-config", default="configs/checklist_v3_9.json",
                     help="default since 2026-11-23: v3_8 (classifier cannot establish absence; dense-lung candidates kept and tagged; a predicted "
                          "pleural-fluid mask below the reporting limit is 'cannot tell'; a positive mask-based answer is headlined 'suggested by "
                          "segmentation'). checklist_v3_7 / v3_6 / v3_5 / v3_4 are kept for comparison")

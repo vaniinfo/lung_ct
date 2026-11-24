@@ -405,3 +405,217 @@ Report (revision 2): `runs/E17_pleural_model_comparison_prep_20261123/REPORT.md`
 **Next actions**
 - None on models without a new experiment brief. Candidate briefs are listed at the end of
   `docs/PLEURAL_EFFUSION_LEARNINGS.md`.
+
+## Pack M6: v3_8 pages with the reviewer's earlier grades filled in (2026-11-23)
+
+Asked for by the project owner. Folder `runs/M6_policy_v3_8_prefilled_20261123/` (4 pages + index). M5 is unchanged
+(hashes compared before and after) and stays the pack with an empty form.
+
+**Implemented**
+- `build_policy_pack.py --prefill-earlier-grades --reference-columns` (both off by default; M5 rebuilds as before).
+- Form filled from the authenticated earlier grade file of each case. The page names the policy those grades were made
+  on (v3_2, v3_3 or v3_4) and asks the reviewer to check each one against this page.
+- Every exported row has `answer_origin` (`carried_over_from_earlier_grade_unchanged`, `changed_on_this_page`,
+  `entered_on_this_page`), `carried_from_policy`, `carried_from_saved_utc`.
+- One always-visible reference column: CT-RATE report label ("not mentioned" is not "absent"; derived from the report
+  text, not from image annotation). The comparison tag uses the current assessment, so "suggested by segmentation" and
+  "cannot tell" are never counted as agreement. A separate "reviewer's earlier grade" column was built first and removed
+  at the project owner's request; the earlier grades remain in the form and in the collapsed read-only card.
+
+**Tested**
+- `scripts/check_prefilled_pack.py`, Edge: 40 of 40 checks (form equals earlier file, columns visible, origin columns
+  correct untouched and after one change, own storage key). Output `runs/V4_M6_viewer_check_20261123/`.
+- Import: an M6 export is read as its own group (policy v3_8, pack M6) with no problems reported. Unit tests 202 pass.
+
+**Limits**
+- A row marked carried over unchanged is the earlier grade, made against another page's wording. It is not a new
+  assessment of v3_8 and must not be counted as one. Showing earlier answers can also nudge the reviewer to keep them.
+- Development pages, open. Four cases. Not sent; no person has looked at the pages. Chrome not run for M6.
+
+## Policy v3_9: atelectasis rule restored; pack M7 (2026-11-23)
+
+Project-owner decision: the v3_6 withdrawal of the atelectasis rule is reversed. `configs/checklist_v3_9.json` is the
+default of `scripts/agent_run_case.py`. v3_8 files and packs M5 / M6 are unchanged (hashes compared).
+
+**Implemented**
+- Atelectasis is "present" when dense lung within 15 mm of the predicted pleural fluid (E88) is 30 mL or more, as on
+  the pages up to v3_5. Below 30 mL: "cannot tell" (the rule never says "absent").
+- The dense-lung candidate paragraph is no longer appended to the atelectasis answer. Nothing else changed.
+- Pack `runs/M7_policy_v3_9_prefilled_20261123/`: v3_9 pages, earlier grades filled in, CT-RATE report-label column.
+
+**Tested**
+- 58 development scans re-scored (`runs/E18_atelectasis_rule_restored_v3_9_20261123/rescore_v3_9.json`): 5 answers
+  change, all atelectasis "cannot tell" -> "present" (valid_102, 202, 301, 500, 72); no other answer or text changes.
+- Against CT-RATE report labels: 9 scans labelled atelectasis; rule present on 3 of them and on 2 unlabelled scans
+  (valid_301, graded present by the reviewer; valid_72); 53 "cannot tell".
+- `tests/test_v3_9.py` (5 tests); all unit tests 207 pass. M7 browser check (Edge): 40 of 40.
+
+**Known limits accepted with this decision**
+- The answer depends on the predicted pleural-fluid mask, which the same page only calls "suggested by segmentation";
+  a mask on tumour gives a false atelectasis. Tumour or consolidation next to fluid is counted as atelectasis.
+- Only atelectasis next to fluid can be found (6 of 9 labelled scans stay "cannot tell").
+- Decided after seeing the reviewer's grades on the four open development cases: they are not a test of this change.
+- Not validated; development data only. Not committed; M7 not sent.
+
+## Policy v3_10: lung nodule from segmentation candidates, four graded cases; pack M8 (2026-11-23)
+
+Project-owner decision. `configs/checklist_v3_10.json` = v3_9 plus the lung nodule answer. Scope: the four graded
+development cases only. The default for new runs stays v3_9, because the agent run does not yet compute the nodule rows.
+Packs M5, M6, M7 unchanged (M7 hashes compared; one M7 page rebuilt byte-identically with the changed code).
+
+**Implemented**
+- `scripts/nodule_evidence_rows.py`: rows E97 (candidate count) and E98 (lobe and equivalent-sphere diameter of each
+  candidate) from the stored TotalSegmentator `lung_nodules` mask. No new inference; evidence.json not rewritten.
+- One or more candidates: "Lung nodule suggested by segmentation" (stored status present, current assessment suggested).
+  No candidate: "cannot tell (no candidate outlined)". Never "present", never "absent". No size limit, no filter.
+- Viewer: outline "Nodule candidates (segmentation model)"; "Show in scan" on the row jumps to the largest candidate.
+- Pack `runs/M8_policy_v3_10_prefilled_20261123/` (earlier grades filled in, CT-RATE report-label column).
+
+**Tested**
+- Four cases: 301 six candidates (3.2 to 29.7 mm), 541 three (2.3 to 3.1 mm), 832 seven (2.0 to 18.9 mm), 988 none.
+  Three answers move "cannot tell" -> suggested; no other answer or text changes.
+- `tests/test_v3_10.py` (5 tests); all unit tests 212 pass. M8 browser check (Edge) 40 of 40; row, outline and jump
+  inspected on 301 and 832 (`runs/V6_M8_viewer_check_20261123/`).
+
+**Limits**
+- Candidates are unvalidated model output. On 301 the three largest (30, 14, 12 mm) exceed the 8 mm the report gives
+  for the largest nodule, so they are probably consolidation or mass. On the 58 scans (E11) 13 of 35 scans without a
+  nodule label also get a candidate. Sizes are equivalent-sphere diameters of the outline, not nodule diameters.
+- Chosen after seeing the reviewer's grades on these four open cases: they are not a test of the change.
+- The other 54 development scans are not re-scored with v3_10. Not committed; M8 not sent.
+
+## Mask-derived airway calibre estimates for bronchiectasis research: code written, NOT RUN (2026-11-23)
+
+Description: `docs/AIRWAY_BRONCHIECTASIS_MEASURES.md`. Nothing below has been executed: no test, no measurement run.
+Only a syntax check (py_compile) was done. The Phase 5 baseline code and `runs/P5_airway_*` are unchanged.
+
+**Implemented (new files only)**
+- `src/lung_ct/airway/calibre.py`: per tree branch, lumen area (mm2), area-equivalent diameter (mm), tapering along the
+  branch (% per mm) and against the parent (%), lobe, quality flags; case-level quality flags; case features.
+- `scripts/airway_measure.py` -> `runs/P6_airway_measures_*` (runs the unchanged tree stage, then the measurements).
+- `src/lung_ct/airway/cohort.py`, `scripts/airway_group_compare.py`: patient-level splits written once, descriptive
+  group comparison, test split locked behind a frozen plan. No classifier, no threshold.
+- `tests/test_airway_calibre.py`: synthetic tubes and split rules (12 tests, not run).
+
+**Tested**: nothing.
+
+**Wording rule**: these values are mask-derived estimates, not validated airway-diameter measurements from the CT.
+The current data (14 report-derived positive labels among 85 scans; 4 radiologist-reviewed scans) can check pipeline
+behaviour and cannot establish bronchiectasis detection performance.
+
+**Blocked**
+- AirQuant needs MATLAB (unavailable); it stays a methods reference and is not integrated.
+- No dataset with airway reference annotations is in the project: measurement agreement cannot be assessed.
+- No expert-labelled bronchiectasis cohort: local labels are CT-RATE report-derived (14 of 85 scans).
+- Broncho-arterial ratio: out of scope (no reliable airway-artery pairing).
+
+**Next actions (project owner)**
+- Run the commands in section 11 of the document, starting with the synthetic-tube tests; tolerances in those tests are
+  first guesses and may need review against the measured values.
+
+## Mask-derived airway estimates: first run on the four graded cases (2026-11-23)
+
+Runs: `runs/P6_airway_measures_3cases_20261123_211533` (valid_301, 541, 988), `runs/P6_airway_measures_1cases_20261123_211613` (valid_832).
+Pipeline check only. Four scans cannot show anything about bronchiectasis.
+
+**Tested**
+- `tests/test_airway_calibre.py` 13 pass, `tests/test_airway_tree.py` 15 pass (baseline unchanged). Tolerances were not changed
+  after the first run. One fixture was moved off the voxel lattice: for a perfectly symmetric synthetic tube at 0.8 mm the
+  baseline skeletoniser (scikit-image Lee thinning) returned an empty skeleton and the tree stage failed with an unclear error.
+  Baseline code not changed; recorded as a known weakness of the tree stage for symmetric synthetic input.
+- Synthetic tubes: 6 mm tube estimated 5.87 to 6.08 mm at 1 mm and at 0.7 x 0.7 x 1.5 mm voxels; cone with true narrowing
+  1.53 % per mm estimated 1.49.
+- Four cases ran (11 to 18 s each): 58 to 311 tree branches; 55 to 272 with an estimate.
+
+**Findings (pipeline behaviour)**
+- valid_832: `broken_airway_mask` (69 pieces; 36.0 mL outside the largest piece, 21.9 mL kept). The kept piece is the right
+  lung tree only, without the trachea. Its generations and estimates are not usable. The flag caught it.
+- valid_301: only 58 branches, to generation 7 (lungs with effusion and consolidation): little airway was segmented.
+- valid_541 and valid_988: complete-looking trees (311 and 260 branches); trachea estimate 12.3 and 12.8 mm.
+- 28% to 74% of branches are `small_relative_to_voxel`; on valid_541 (1.25 mm slices) 230 of 311.
+- Tapering along a branch is noisy: most branches have fewer than three 3 mm windows.
+- No pattern separates the 2 reviewer-present from the 2 reviewer-absent scans, and none was expected from four scans.
+
+**Not done**: visual overlay of the estimates on CT; parameter sensitivity; comparison with any reference; group comparison
+script (not run: four scans). No P5 baseline exists for these CT-RATE scans, so the P5-versus-P6 equality check was not possible here.
+
+## CT-CLIP zero-shot on the four graded cases (hiatal hernia question) (2026-11-23)
+
+Run `runs/E21_ctclip_zero_shot_4cases_20261123_215255`. Exploratory; four scans; scores are uncalibrated and no threshold was applied.
+
+**Implemented**
+- `scripts/ctclip_fetch.py`, `fetch_ctclip.bat` (gated checkpoint; token from the environment only), `scripts/run_ctclip.py`
+  (published preprocessing and prompts of the CT-CLIP repository, commit a2a155c; one scan at a time).
+- `models/ct_clip` 2.1 GB (CT-CLIP_v2.pt 1.77 GB, text encoder, code), `environments/ct_clip` 4.9 GB (torch 2.5.1+cu124).
+- Array layout checked against one original CT-RATE file (identical; local file already in HU): `models/ct_clip/orientation_check_valid_301.json`.
+  The raw copy was deleted after the check.
+
+**Tested**
+- 4 of 4 scans ran (3 to 5 s, 3.9 GB GPU). Checkpoint loaded with 0 missing keys and 1 unexpected key (`position_ids`, a buffer
+  newer transformers versions no longer store).
+- Hiatal hernia score: valid_832 0.79, valid_301 0.54, valid_541 0.48, valid_988 0.23. Reviewer: present on 832 and 301, absent on
+  541 and 988. Same order as the reviewer, but 301 and 541 are 0.06 apart.
+- Scores move together per scan: valid_832 is 0.61 to 0.90 on all 18 conditions and valid_988 is 0.11 to 0.38 on all 18. The hiatal
+  hernia score is not specific to hiatal hernia on these scans.
+- COLIPRI (current classifier) on the same scans: 0.06, 0.005, 0.94, 0.004 (301, 541, 832, 988).
+
+**Limits**: four scans; development cases; CT-RATE validation split (not in CT-CLIP's training); fine-tuned CT-CLIP variants not tried.
+Not wired into the checklist. Not committed.
+
+## CT-CLIP fine-tuned variants; all three variants on the 85 local scans (pilot) (2026-11-23)
+
+Runs: `runs/E21_ctclip_{base,vocabfine,classfine}_85cases_*`, four-scan runs `runs/E21_ctclip_{zero_shot,vocabfine,classfine}_4cases_*`,
+table `runs/E21_ctclip_85cases_comparison.csv`. Pilot only: 85 scans from 70 patients, CT-RATE validation split, development data.
+
+**Implemented**: `scripts/run_ctclip.py --variant base|vocabfine|classfine` (published preprocessing; ClassFine = image encoder +
+linear layer, sigmoid, as in the repository's `ct_lipro_inference.py`). Checkpoints 1.77 GB each in `models/ct_clip`.
+
+**Tested**
+- 85 of 85 scans ran for each variant; all checkpoints loaded with 0 missing keys.
+- Runner check against report labels (rank statistic, "not mentioned" as comparison group, so not accuracy): 0.9 or more for
+  cardiomegaly, arterial and coronary calcification, pericardial and pleural effusion, medical material in all variants. The
+  runner reproduces sensible model behaviour.
+- Shared score component (not shown to measure abnormality; exact definition in the frozen report): share of raw-score variance in one component 0.89 zero-shot, 0.77 VocabFine, 0.97 ClassFine (all 85 scans).
+  The hiatal hernia score correlates 0.95 / 0.77 / 0.93 (Spearman) with the mean of the other 17 scores.
+- Hiatal hernia: 4 scans carry the report label (3 patients) and 4 have a reader grade; no accuracy figure is possible.
+  valid_301 (label yes, reader present): percentile among the 85 scans 68 zero-shot, 46 VocabFine, 80 ClassFine; COLIPRI 0.06.
+  valid_1057 (both reconstructions, label yes): 86th percentile or higher in every model; COLIPRI 0.97 and 0.99.
+- COLIPRI's rank statistic against report labels is equal or higher than the CT-CLIP variants for most conditions on these scans.
+
+**Training / selection exposure**: the scans are from the CT-RATE validation split. The repository's fine-tuning scripts train on the
+data folder given and save every epoch without a validation step; the base trainer evaluates on the validation split during
+training. Gradient training on these scans is not indicated; use of the split for monitoring or checkpoint selection cannot be
+excluded, and it is the split the authors report results on. Not an independent test.
+
+**Conclusion (wording revised 2026-11-24)**: these pilot results do not demonstrate sufficient condition-specific benefit to justify adopting a
+CT-CLIP variant for hiatal hernia. (An earlier version of this entry tied the conclusion to one case, valid_301; that criterion is withdrawn.)
+
+## CT-CLIP pilot frozen; hiatal hernia reader study proposed (2026-11-24)
+
+Frozen report: `runs/E21_ctclip_pilot_20261124/REPORT.md` (hashes in `SHA256SUMS.json`). Proposal: `docs/HIATAL_HERNIA_READER_STUDY_PROPOSAL.md`.
+
+**Decision**: development pilot only. COLIPRI stays. No hiatal-hernia threshold, no score tuning, no ranking rule.
+These pilot results do not demonstrate sufficient condition-specific benefit to justify adopting a CT-CLIP variant for hiatal hernia.
+
+**Implemented**: `scripts/ctclip_runner_check.py` (bounded implementation check), `scripts/ctclip_pilot_analysis.py` (one reconstruction per
+patient), `scripts/hh_reader_study_sample.py` (draft sampling table, `runs/E22_hh_reader_feasibility_DRAFT/`).
+
+**Tested (one scan, valid_301_a_2)**
+- Checkpoint identity: size and SHA-256 of all three files reproduce the repository's Git-LFS pointer ids.
+- Loading: every model tensor equals the checkpoint tensor; one unused checkpoint entry (`position_ids`); the authors' strict loader fails on it
+  with transformers 4.44.2, so loading is non-strict (recorded deviation).
+- Condition order equals the authors' lists and the label-file columns. ClassFine order rests on code, not data.
+- Normalisation: softmax over the two prompts of one condition only; sigmoid per output for ClassFine.
+- Authors' preprocessing on the original CT-RATE file and authors' softmax give tensors and scores identical to our runner (difference 0).
+- Not reproduced: the authors' inference class / data loader and their software versions.
+
+**Descriptive analysis, 70 patients (one reconstruction each)**: share of the first component, raw / logit / standardised / standardised logit:
+zero-shot 0.90 / 0.89 / 0.88 / 0.88; VocabFine 0.79 / 0.81 / 0.66 / 0.66; ClassFine 0.97 / 0.98 / 0.86 / 0.86. No CT-CLIP variant is consistently
+above COLIPRI against report labels. Hiatal hernia: 3 labelled patients; nothing estimated.
+
+**Proposed, not started**: reader feasibility study, 30 of 66 local patients (strata C 2, H 12, M 8 of 20, L 8 of 32; probabilities 1, 1, 0.40, 0.25),
+readers blind to scores, report and labels; present / absent / uncertain plus assessability; two readers if available. 1,234 validation patients
+reserved (not downloaded, scored or viewed) for a later evaluation. No calibration estimate promised.
+
+**Blocked / needs decision**: sample size, readers, form fields (the clinician reviewer). Nothing committed.
+

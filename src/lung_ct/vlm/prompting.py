@@ -122,8 +122,9 @@ def consistency_warnings(obj: dict) -> list[str]:
     return warns
 
 
-def parse_response(text: str, truncated: bool) -> dict:
-    """Classify a raw response. status: valid | empty_response | invalid_json | schema_error."""
+def parse_response(text: str, truncated: bool, schema: str | None = None) -> dict:
+    """Classify a raw response. status: valid | empty_response | invalid_json | schema_error.
+    schema None = v1 opacity schema; "checklist_v1" = reader checklist (lung_ct.vlm.checklist_schema)."""
     obj, method, err = extract_json(text)
     rec = {"extraction_method": method, "truncated_at_max_new_tokens": truncated,
            "errors": [], "warnings": []}
@@ -131,7 +132,13 @@ def parse_response(text: str, truncated: bool) -> dict:
         rec["status"] = "empty_response" if err == "empty response" else "invalid_json"
         rec["errors"].append(err)
         return rec
-    errs = validate(obj)
+    if schema == "checklist_v1":
+        from lung_ct.vlm.checklist_schema import checklist_warnings, validate_checklist
+        errs = validate_checklist(obj)
+    elif schema is None:
+        errs = validate(obj)
+    else:
+        raise ValueError(f"unknown response schema {schema!r}")
     if errs:
         rec["status"] = "schema_error"
         rec["errors"] = errs
@@ -139,5 +146,5 @@ def parse_response(text: str, truncated: bool) -> dict:
         return rec
     rec["status"] = "valid"
     rec["parsed"] = obj
-    rec["warnings"] = consistency_warnings(obj)
+    rec["warnings"] = checklist_warnings(obj) if schema == "checklist_v1" else consistency_warnings(obj)
     return rec

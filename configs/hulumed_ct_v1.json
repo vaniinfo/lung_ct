@@ -1,0 +1,56 @@
+{
+  "config_version": "hulumed_ct_v1",
+  "frozen": false,
+  "note": "Hulu-Med comparison model. prompt and generation copied verbatim from configs/medgemma_ct_v1.json (same prompt_sha256). representation differs only in the HU windows (grey lung window). model.revision stays null until the downloaded remote code has been reviewed; run_hulumed.py refuses to load an unpinned revision.",
+  "copied_from": "configs/medgemma_ct_v1.json",
+  "model": {
+    "model_id": "ZJU-AI4H/Hulu-Med-7B",
+    "revision": "258594714a0d3835eb2c9e4cc165a4242e606d71",
+    "license": "Apache-2.0",
+    "trust_remote_code": true,
+    "dtype": "bfloat16",
+    "device_map": "cuda:0",
+    "attn_implementation": "sdpa",
+    "quantization": null,
+    "usage_reference": "remote processing_hulumed.py (rev above) + github.com/ZJUI-AI4H/Hulu-Med README: 3D as a video block, merge_size 2 chosen by the processor",
+    "add_system_prompt": true,
+    "remote_code_review": "2026-11-14: snapshot 2585947 *.py reviewed - imports only transformers/torch/PIL/cv2/decord/ffmpeg/imageio; importlib loads only sibling files in the snapshot; no network, subprocess, eval/exec or file writes. Processor API: __call__(conversation=..., images=[(modal, frames)])."
+  },
+  "representation": {
+    "name": "lung_window_gray",
+    "max_slices": 85,
+    "sampling": "notebook_uniform: index = int(round(i / max_slices * (n - 1))) for i in 1..max_slices when n > max_slices, else all slices",
+    "slice_axis": "axial",
+    "slice_order": "superior_to_inferior",
+    "in_plane_display": "radiological: rows anterior->posterior, columns patient right->left (DICOM LPS pixel convention)",
+    "resample": false,
+    "rgb_windows_hu": [
+      [
+        -1350,
+        150
+      ],
+      [
+        -1350,
+        150
+      ],
+      [
+        -1350,
+        150
+      ]
+    ],
+    "image_format": "jpeg",
+    "jpeg_quality": 75,
+    "slice_label_template": "SLICE {n}",
+    "note": "Same slice sampling, orientation, ordering and JPEG encoding as medgemma_ct_v1; the three channels all use the standard lung window (W1500/L-600 -> -1350..150 HU), i.e. a plain grey image as a radiologist views it, instead of MedGemma's 3-window colour composite."
+  },
+  "prompt": {
+    "version": "v1",
+    "instruction": "You are analyzing axial slices from a single chest CT examination. The slices are sampled at uniform intervals across the scanned volume and are ordered from superior (head) to inferior (feet). Images are shown in radiological convention: the patient's right is on the image left and anterior is at the top. Please review the slices provided below carefully.",
+    "query": "\n\nBased on the visual evidence in the slices provided above: Describe the pulmonary findings visible in this CT representation. State whether pulmonary opacities are present, absent, or indeterminate, and describe their broad distribution only when supported by the images. State any limitations in image coverage or assessability. Do not infer disease etiology, chronicity, or interval change from this single examination. Do not invent quantitative measurements.\n\nReturn only a JSON object with exactly these keys and allowed values:\n{\n  \"assessability\": \"assessable\" | \"limited\" | \"not_assessable\",\n  \"opacity_presence\": \"present\" | \"absent\" | \"indeterminate\",\n  \"distribution\": {\n    \"laterality\": \"bilateral\" | \"right\" | \"left\" | \"not_applicable\" | \"indeterminate\",\n    \"craniocaudal\": \"upper_predominant\" | \"middle_predominant\" | \"lower_predominant\" | \"no_predominance\" | \"not_applicable\" | \"indeterminate\",\n    \"axial\": \"peripheral\" | \"central\" | \"mixed\" | \"not_applicable\" | \"indeterminate\"\n  },\n  \"description\": \"<short description of the visible pulmonary findings>\",\n  \"limitations\": [\"<limitation>\", ...]\n}\nUse \"not_applicable\" for distribution fields when opacities are absent."
+  },
+  "generation": {
+    "do_sample": false,
+    "max_new_tokens": 1024,
+    "batch_size": 1
+  }
+}

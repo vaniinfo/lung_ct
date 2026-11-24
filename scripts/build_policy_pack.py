@@ -29,6 +29,11 @@ CASES = [  # case, run, earlier authenticated grade file
 ]
 
 
+NOT_COPIED_NOTE = "Your earlier grades are shown on each page for reference, with the policy they were made on, and are not copied into the new form."
+PREFILL_NOTE = ("Your earlier grades are filled into the form as a starting point. They were made on pages showing an earlier policy, so the answers "
+                "you graded may read differently here: please check each grade and change it where needed.")
+
+
 def sha(p: Path) -> str:
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
@@ -39,6 +44,8 @@ def main() -> int:
     ap.add_argument("--folder", required=True)
     ap.add_argument("--checklist", required=True, help="config version, e.g. checklist_v3_8")
     ap.add_argument("--rows", required=True, help="replay folder holding evidence_rows/<case>.json (E92-E94)")
+    ap.add_argument("--prefill-earlier-grades", action="store_true", help="fill the reviewer's earlier grades into the form (origin recorded in every exported row)")
+    ap.add_argument("--reference-columns", action="store_true", help="show the CT-RATE report label as a visible column")
     args = ap.parse_args()
     out = ROOT / args.folder
     if out.exists() and any(out.iterdir()) and not (out / "PACK_INFO.json").exists():
@@ -60,6 +67,7 @@ def main() -> int:
         cmd = [sys.executable, str(ROOT / "scripts" / "build_viewer_page.py"), "--run", f"runs/{run}", "--checklist-file", chk_file, "--rule-based",
                "--viewer", "v4", "--corrected-wording", "--policy-pack", args.pack, "--extra-evidence-rows", f"{args.rows}/evidence_rows/{case}.json",
                "--earlier-grades-csv", f"runs/grades_received/{grades}", "--out", f"{args.folder}/{name}"]
+        cmd += (["--prefill-earlier-grades"] if args.prefill_earlier_grades else []) + (["--reference-columns"] if args.reference_columns else [])
         print(" ".join(cmd[1:]), flush=True)
         subprocess.run(cmd, check=True, cwd=ROOT)
         pe = next(i for i in chk["items"] if i["key"] == "pleural_effusion")
@@ -73,7 +81,10 @@ def main() -> int:
                       "pleural_effusion_shown": {"display": pe.get("display"), "headline": pe.get("headline"), "mask_state": pe.get("mask_state"),
                                                  "provisional_threshold_result_NOT_A_CURRENT_ASSESSMENT": (pe.get("provisional_threshold_result") or {}).get("answer")},
                       "earlier_review": {"file": f"runs/grades_received/{grades}", "sha256": auth[grades], "made_on_policy": made_on,
-                                         "shown": "read-only, collapsed, labelled with that policy; not filled into the form"}})
+                                         "shown": ("read-only card AND filled into the form as a starting point; each exported row records answer_origin "
+                                                   "(carried over unchanged / changed / entered on this page) and the policy and date of the earlier grade"
+                                                   if args.prefill_earlier_grades else "read-only, collapsed, labelled with that policy; not filled into the form"),
+                                         "reference_columns": bool(args.reference_columns)}})
     li = "".join(f'<li><a href="{E(p["file"])}"><b>{E(p["case_id"][:-4])}</b></a> <span class="muted">earlier review was made on {E(p["earlier_review"]["made_on_policy"])}</span></li>'
                  for p in pages)
     (out / "index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>Lung CT agent - pack {E(args.pack)} ({E(args.checklist)})</title>
@@ -93,8 +104,7 @@ from the start. Not blinded and not an evaluation. Earlier packs (M1 to M4) show
 <div class="muted">What is different in this policy: a classifier score is supporting evidence only. An empty or small predicted outline never means
 &ldquo;absent&rdquo;. A positive answer that rests only on a predicted outline reads &ldquo;suggested by segmentation&rdquo;. Dense lung is listed as tagged
 candidates, not as findings. The limits are provisional reporting limits, not validated diagnostic boundaries.</div>
-<div class="muted" style="margin-top:8px">Grades saved from these pages name {E(args.checklist)} and pack {E(args.pack)} in every row. Your earlier grades
-are shown on each page for reference, with the policy they were made on, and are not copied into the new form.</div>
+<div class="muted" style="margin-top:8px">Grades saved from these pages name {E(args.checklist)} and pack {E(args.pack)} in every row. {PREFILL_NOTE if args.prefill_earlier_grades else NOT_COPIED_NOTE}</div>
 <div class="how"><b>Using the scan:</b> wheel or arrow keys = next / previous image &middot; click = move the cross-hair &middot; drag = move the image &middot;
 right-drag or Shift+drag = brightness / contrast &middot; Ctrl+wheel or the Zoom buttons = zoom &middot; Axial / Coronal / Sagittal buttons change the view.
 R, L, A, P, S, I at the image edges mark the patient&rsquo;s right, left, front, back, head and feet.</div>

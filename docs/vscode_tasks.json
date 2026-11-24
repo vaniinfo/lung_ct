@@ -1,0 +1,64 @@
+{
+  // VS Code tasks for the lung_ct project: Terminal > Run Task...
+  // GPU steps run on this PC. The download task asks for the Hugging Face token in the terminal;
+  // the token is never written to a file.
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "CT-RATE v3: 1 download (token needed)",
+      "type": "shell",
+      "command": "cmd /c run_ctrate_v3.bat download",
+      "problemMatcher": [],
+      "presentation": {"reveal": "always", "panel": "dedicated"}
+    },
+    {
+      "label": "CT-RATE v3: 2 same 20 patients, soft scans (v2 vs v3)",
+      "type": "shell",
+      "command": "cmd /c run_ctrate_v3.bat soft",
+      "problemMatcher": [],
+      "presentation": {"reveal": "always", "panel": "dedicated"}
+    },
+    {
+      "label": "CT-RATE v3: 3 new patients test20b (v3)",
+      "type": "shell",
+      "command": "cmd /c run_ctrate_v3.bat test20b",
+      "problemMatcher": [],
+      "presentation": {"reveal": "always", "panel": "dedicated"}
+    },
+    {
+      "label": "CT-RATE v3: all steps",
+      "type": "shell",
+      "command": "cmd /c run_ctrate_v3.bat all",
+      "problemMatcher": [],
+      "presentation": {"reveal": "always", "panel": "dedicated"}
+    },
+    {
+      "label": "CT-RATE v3_1: 4 download 20 more new patients (token needed)",
+      "type": "shell",
+      "command": "cmd /c run_ctrate_v3.bat download_c",
+      "problemMatcher": [],
+      "presentation": {"reveal": "always", "panel": "dedicated"}
+    },
+    {
+      "label": "CT-RATE v3_1: 5 run test20c",
+      "type": "shell",
+      "command": "cmd /c run_ctrate_v3.bat test20c",
+      "problemMatcher": [],
+      "presentation": {"reveal": "always", "panel": "dedicated"}
+    },
+    {
+      "label": "Meeting pack: build interactive viewer pages",
+      "type": "shell",
+      "command": "cmd /c build_meeting_viewers.bat",
+      "problemMatcher": [],
+      "presentation": {"reveal": "always", "panel": "dedicated"}
+    },
+    {
+      "label": "Tests",
+      "type": "shell",
+      "command": ".venv\\Scripts\\python.exe -m pytest -q tests",
+      "problemMatcher": [],
+      "group": "test"
+    }
+  ]
+}

@@ -66,8 +66,14 @@ def weight_hashes() -> dict:
 
 
 def check_class_map():
-    """Fail explicitly if the installed version lacks the expected classes."""
+    """Fail explicitly if the installed version lacks the expected classes.
+
+    A task listed with names None (added by --extra-task) takes all of its classes.
+    """
     from totalsegmentator.map_to_binary import class_map
+    for task in list(EXPECTED):
+        if EXPECTED[task] is None:
+            EXPECTED[task] = sorted(class_map[task].values())
     for task, names in EXPECTED.items():
         available = set(class_map[task].values())
         missing = [n for n in names if n not in available]
@@ -111,6 +117,10 @@ def segment_case(case_id: str, ct_path: Path) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("--extra-total", nargs="*", default=[], metavar="CLASS",
+                    help="extra classes for the 'total' task roi_subset (e.g. heart liver aorta)")
+    ap.add_argument("--extra-task", nargs="*", default=[], metavar="TASK",
+                    help="extra TotalSegmentator tasks, all classes (e.g. pleural_pericard_effusion)")
     ap.add_argument("--qc-run", required=True, type=Path,
                     help="Phase 1 run dir with run_manifest.json (source of HU validity)")
     g = ap.add_mutually_exclusive_group(required=True)
@@ -137,6 +147,9 @@ def main() -> int:
 
     import importlib.metadata as md
     import torch
+    EXPECTED["total"] = EXPECTED["total"] + [c for c in args.extra_total if c not in EXPECTED["total"]]
+    for t in args.extra_task:
+        EXPECTED.setdefault(t, None)
     check_class_map()
 
     run_id = f"P2_seg_{len(eligible)}cases_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -153,6 +166,7 @@ def main() -> int:
             "gpu": torch.cuda.get_device_name(0),
             "totalseg_home": os.environ["TOTALSEG_HOME_DIR"],
             "weights_sha256": weight_hashes(),
+            "expected_outputs": {k: list(v) for k, v in EXPECTED.items()},
         },
         "skipped": skipped,
         "cases": [],

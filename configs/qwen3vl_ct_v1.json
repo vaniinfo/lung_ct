@@ -1,0 +1,56 @@
+{
+  "config_version": "qwen3vl_ct_v1",
+  "frozen": false,
+  "note": "Comparison model for medgemma_ct_v1. representation, prompt and generation are copied verbatim from configs/medgemma_ct_v1.json (same prompt_sha256). Set frozen=true and pin model.revision to the logged resolved_revision after the first successful run.",
+  "copied_from": "configs/medgemma_ct_v1.json",
+  "model": {
+    "model_id": "Qwen/Qwen3-VL-8B-Instruct",
+    "revision": "0c351dd01ed87e9c1b53cbc748cba10e6187ff3b",
+    "license": "Apache-2.0",
+    "dtype": "bfloat16",
+    "device_map": "auto",
+    "offload_buffers": true,
+    "use_fast_processor": true,
+    "attn_implementation": "sdpa",
+    "quantization": null,
+    "image_max_pixels": 262144,
+    "image_min_pixels": 65536,
+    "image_pixels_note": "262144 = 512x512 -> about 256 visual tokens per slice (16-px patches, 2x2 merge), similar to MedGemma's 256 per image. 85 slices -> ~22k visual tokens. If it runs out of GPU memory, lower image_max_pixels (e.g. 147456 = 384x384, ~144 tokens) and record it as a separate config version."
+  },
+  "representation": {
+    "name": "official_notebook_baseline",
+    "max_slices": 85,
+    "sampling": "notebook_uniform: index = int(round(i / max_slices * (n - 1))) for i in 1..max_slices when n > max_slices, else all slices",
+    "slice_axis": "axial",
+    "slice_order": "superior_to_inferior",
+    "in_plane_display": "radiological: rows anterior->posterior, columns patient right->left (DICOM LPS pixel convention)",
+    "resample": false,
+    "rgb_windows_hu": [
+      [
+        -1024,
+        1024
+      ],
+      [
+        -135,
+        215
+      ],
+      [
+        0,
+        80
+      ]
+    ],
+    "image_format": "jpeg",
+    "jpeg_quality": 75,
+    "slice_label_template": "SLICE {n}"
+  },
+  "prompt": {
+    "version": "v1",
+    "instruction": "You are analyzing axial slices from a single chest CT examination. The slices are sampled at uniform intervals across the scanned volume and are ordered from superior (head) to inferior (feet). Images are shown in radiological convention: the patient's right is on the image left and anterior is at the top. Please review the slices provided below carefully.",
+    "query": "\n\nBased on the visual evidence in the slices provided above: Describe the pulmonary findings visible in this CT representation. State whether pulmonary opacities are present, absent, or indeterminate, and describe their broad distribution only when supported by the images. State any limitations in image coverage or assessability. Do not infer disease etiology, chronicity, or interval change from this single examination. Do not invent quantitative measurements.\n\nReturn only a JSON object with exactly these keys and allowed values:\n{\n  \"assessability\": \"assessable\" | \"limited\" | \"not_assessable\",\n  \"opacity_presence\": \"present\" | \"absent\" | \"indeterminate\",\n  \"distribution\": {\n    \"laterality\": \"bilateral\" | \"right\" | \"left\" | \"not_applicable\" | \"indeterminate\",\n    \"craniocaudal\": \"upper_predominant\" | \"middle_predominant\" | \"lower_predominant\" | \"no_predominance\" | \"not_applicable\" | \"indeterminate\",\n    \"axial\": \"peripheral\" | \"central\" | \"mixed\" | \"not_applicable\" | \"indeterminate\"\n  },\n  \"description\": \"<short description of the visible pulmonary findings>\",\n  \"limitations\": [\"<limitation>\", ...]\n}\nUse \"not_applicable\" for distribution fields when opacities are absent."
+  },
+  "generation": {
+    "do_sample": false,
+    "max_new_tokens": 1024,
+    "batch_size": 1
+  }
+}

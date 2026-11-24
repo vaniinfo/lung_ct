@@ -102,7 +102,7 @@ def answer_cell(item: dict, cond: dict, rows: dict) -> str:
                    f"unchanged, gives &ldquo;{E(PTR_WORDS.get(ptr['answer'], ptr['answer']))}&rdquo; for this estimate. Its limits "
                    f"({ptr['present_at_least']:g} and {ptr['absent_below']:g} {E(unit)}) are provisional reporting limits, not validated diagnostic "
                    "boundaries. A result below a limit is <b>not</b> a finding of no effusion.</span>")
-    elif "present_at_least" in cond:
+    elif "present_at_least" in cond and not cond.get("hide_cutoffs"):
         lo = cond.get("absent_below")
         det.append(f"<span class='l'><b>Tool's provisional cut-offs:</b> present from {cond['present_at_least']:g} {E(unit)}; "
                    + (f"none measured below {lo:g} {E(unit)}; in between = cannot tell" if lo is not None

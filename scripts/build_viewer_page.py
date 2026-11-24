@@ -70,10 +70,11 @@ OVERLAYS = [  # key, label, NiiVue colormap, swatch colour, on at start
     ("calcium", "Aortic calcium", "green", "#22c55e", False),
     ("heart", "Heart outline", "winter", "#06b6d4", False),
     ("dependent", "Back-of-lung band (not counted)", "cool", "#94a3b8", False),
+    ("nodules", "Nodule candidates (segmentation model)", "hot", "#f97316", False),     # only loaded for checklist_v3_10 and later
 ]
 JUMP = {"pleural_effusion": "pleural", "pericardial_effusion": "pericardial", "consolidation": "consolidation",
         "ground_glass": "ground_glass", "atelectasis": "compressed", "arterial_calcification": "calcium",
-        "cardiomegaly": "heart", "lung_density": "consolidation"}
+        "cardiomegaly": "heart", "lung_density": "consolidation", "lung_nodule": "nodules"}
 
 
 SHOW_V2 = "<br><span class='show agentonly'>&#128065; Show in scan</span>"
@@ -102,12 +103,13 @@ POLICY_CSS = """
 .policybar{background:#e7f0ff;border:1px solid #9db9ee;border-radius:10px;padding:8px 10px;margin-top:8px;font-size:13px;color:#10305f}
 .ptr{background:#f6f8fa;border-left:3px solid #9aa4b2;padding-left:6px}
 .earlier table{font-size:12px}.earlier summary{cursor:pointer}
+.refcol{font-size:12px;min-width:92px}.refnote{font-weight:400;font-size:10.5px;color:#57606a}
 """
 # wording that earlier location reports still carry inside checklist files of the current policy; replaced in the displayed text only
 POLICY_DISPLAY_ONLY = (("pleural effusion present (compressed lung)", "pleural fluid outlined by the segmentation model (lobe outlines are less reliable there)"),)
 
 
-def earlier_grades_card(path: Path, case_id: str) -> str:
+def earlier_grades_card(path: Path, case_id: str, prefilled: bool = False) -> str:
     """Read-only copy of grades the reviewer sent earlier, labelled with the page policy they were made on. The file is not changed."""
     import csv
     with open(path, newline="", encoding="utf-8-sig") as f:
@@ -122,12 +124,14 @@ def earlier_grades_card(path: Path, case_id: str) -> str:
     return (f'<div class="card agentonly earlier"><details><summary><b>Earlier review of this case</b> &middot; {E(rows[0]["reviewer"])}, '
             f'{E(rows[0]["saved_utc"][:10])} &middot; made on a page showing <b>{E(", ".join(cfgs) or "an earlier checklist")}</b> (form {E(form)})</summary>'
             '<div class="muted">Shown for reference only. These grades were given against the answers of that earlier page (second column), not against the '
-            f'answers on this page. The file is kept unchanged ({E(path.name)}) and nothing is copied into the form above.</div>'
-            f'<table><tr><th>condition</th><th>tool answer on that page</th><th>reviewer</th><th>severity</th><th>comment</th></tr>{tr}</table>'
+            f'answers on this page. The file is kept unchanged ({E(path.name)}) '
+            + ('and its answers are filled into the form above as a starting point: please check each one against this page.</div>' if prefilled
+               else 'and nothing is copied into the form above.</div>')
+            + f'<table><tr><th>condition</th><th>tool answer on that page</th><th>reviewer</th><th>severity</th><th>comment</th></tr>{tr}</table>'
             + (f'<div class="muted">Overall comment: {E(overall)}</div>' if overall else "") + "</details></div>")
 
 
-def policy_pack_page(page: str, payload_html: str, chk: dict, ev: dict, pack: str, earlier: Path | None) -> str:
+def policy_pack_page(page: str, payload_html: str, chk: dict, ev: dict, pack: str, earlier: Path | None, prefilled: bool = False) -> str:
     """Additions for a policy-labelled pack. Everything before the scan payload only; payload and viewer code are untouched."""
     cut = page.index(payload_html)
     head, tail = page[:cut], page[cut:]
@@ -148,7 +152,7 @@ def policy_pack_page(page: str, payload_html: str, chk: dict, ev: dict, pack: st
         ep = earlier if earlier.is_absolute() else ROOT / earlier
         anchor = '<div class="card agentonly" id="measpanel">'
         assert head.count(anchor) == 1
-        head = head.replace(anchor, earlier_grades_card(ep, ev["case_id"]) + "\n " + anchor, 1)
+        head = head.replace(anchor, earlier_grades_card(ep, ev["case_id"], prefilled) + "\n " + anchor, 1)
     return head + tail
 
 
@@ -171,6 +175,12 @@ def main() -> int:
     ap.add_argument("--policy-pack", default=None, metavar="PACK",
                     help="v4 only: page of a policy-labelled pack (checklist_v3_8 and later). The page states the checklist version and pack, "
                          "the grading form keeps its own storage and records the policy in every CSV row, and earlier grades are never filled in")
+    ap.add_argument("--prefill-earlier-grades", action="store_true",
+                    help="with --earlier-grades-csv: fill the reviewer's earlier grades into the form. The page says which policy they were made "
+                         "on, and every exported row records whether the answer was carried over unchanged, changed, or entered on this page")
+    ap.add_argument("--reference-columns", action="store_true",
+                    help="with --policy-pack: an always-visible column with the CT-RATE report label, compared with the answer on this page. "
+                         "The label is derived from the report text, and the column header says so")
     ap.add_argument("--extra-evidence-rows", type=Path, default=None,
                     help="JSON with additional evidence rows computed after the run (dense-lung inventory replay, rows E92-E94). Merged for "
                          "display only; evidence.json is not rewritten")
@@ -183,6 +193,10 @@ def main() -> int:
         ap.error("--policy-pack cannot be combined with --grades-csv or --blinded")
     if args.earlier_grades_csv and not args.policy_pack:
         ap.error("--earlier-grades-csv needs --policy-pack")
+    if args.prefill_earlier_grades and not args.earlier_grades_csv:
+        ap.error("--prefill-earlier-grades needs --earlier-grades-csv")
+    if args.reference_columns and not args.policy_pack:
+        ap.error("--reference-columns needs --policy-pack")
     V3 = args.viewer == "v3"
     V4 = args.viewer == "v4"
     V2 = args.viewer in ("v2", "v3", "v4")    # v3 and v4 share the v2 layout and grading form
@@ -230,6 +244,8 @@ def main() -> int:
     masks["pleural"] = load("pleural_pericard_effusion/pleural_effusion")
     masks["pericardial"] = load("pleural_pericard_effusion/pericardial_effusion")
     masks["heart"] = load("total/heart")
+    if any(c["key"] == "lung_nodule" and "present_at_least" in c for c in ck["conditions"]):      # v3_10 and later; earlier pages are unchanged
+        masks["nodules"] = load("lung_nodules/lung_nodules")
 
     # crop to the body (+ margin) to keep the file reasonable; affine shifted accordingly
     body = ndimage.binary_opening(hu > -500, iterations=2) | (lab > 0)
@@ -283,6 +299,31 @@ def main() -> int:
         gt = None  # staged pages never contain the original radiology report or its labels
     labels = set(gt["labels"]) if gt else None
     rows_html = ""
+    earlier_rows, earlier_cfg = {}, ""
+    if args.earlier_grades_csv:
+        import csv as _csv
+        ep_ = args.earlier_grades_csv if args.earlier_grades_csv.is_absolute() else ROOT / args.earlier_grades_csv
+        with open(ep_, newline="", encoding="utf-8-sig") as fh:
+            _er = list(_csv.DictReader(fh))
+        earlier_rows = {r["condition_key"]: r for r in _er}
+        earlier_cfg = ", ".join(sorted({r["checklist_config"] for r in _er if r.get("checklist_config")}))
+
+    def ref_cells(it: dict, cat: str, lp) -> str:
+        """Reference cell: CT-RATE report label. Comparison uses the CURRENT assessment category, so 'suggested' is never counted as a confirmed agreement."""
+        def tag(pos):
+            if cat in ("cannot tell", "cannot assess"):
+                return "open", "tool undecided"
+            if cat == "suggested":
+                return "open", "tool: suggested only"
+            if cat == "present":
+                return ("agree", "same as tool") if pos else ("extra", "tool positive, reference not")
+            return ("missed", "tool says absent") if pos else ("agree", "same as tool")
+        if lp is None:
+            c1 = "<td class='agentonly refcol'><span class='muted'>no label for this item</span></td>"
+        else:
+            c, t = tag(lp)
+            c1 = f"<td class='agentonly refcol'><b>{'mentioned' if lp else 'not mentioned'}</b><br><span class='m {c}'>{E(t)}</span></td>"
+        return c1
     conds = {c["key"]: c for c in ck["conditions"]}
     ev_rows = {r["id"]: r for r in ev["rows"]}
     for it in chk["items"]:
@@ -300,7 +341,8 @@ def main() -> int:
                           f"<td class='agentonly'><span class='st {cat.replace(' ', '-')}'>{E(it.get('display', it['status']))}</span>"
                           f"{v2.answer_cell(it, conds.get(it['key'], {}), ev_rows)}</td>"
                           f"<td class='whycol agentonly'>{E(stmt)}<div class='why'>{E(it['basis'])}</div></td>"
-                          + (f"<td class='whycol agentonly'><span class='m {mc}'>{E(mt)}</span></td>" if labels is not None else "") + "</tr>")
+                          + (ref_cells(it, cat, lp) if args.reference_columns else
+                             (f"<td class='whycol agentonly'><span class='m {mc}'>{E(mt)}</span></td>" if labels is not None else "")) + "</tr>")
             continue
         if V2:
             rows_html += (f"<tr class='{'jump' if jump else ''}' data-jump='{jump}'>"
@@ -331,12 +373,17 @@ def main() -> int:
         grading_css = GRADING_CSS + v2.CSS + gv2.CSS
         meas_html = v2.measurement_panel(ev, chk)
         grading_js = gv2.grading_script(ev["case_id"], run.name, chk["config_version"], chk, VIEWER_BUILD,
-                                        gv2.load_grades_csv(args.grades_csv, ev["case_id"], chk) if args.grades_csv else None,
-                                        blinded=args.blinded,
+                                        ({**gv2.load_grades_csv(args.earlier_grades_csv if args.earlier_grades_csv.is_absolute() else ROOT / args.earlier_grades_csv,
+                                                                 ev["case_id"], chk), "made_on": earlier_cfg or "an earlier checklist"}
+                                         if args.prefill_earlier_grades else
+                                         gv2.load_grades_csv(args.grades_csv, ev["case_id"], chk) if args.grades_csv else None),
+                                        blinded=args.blinded, allow_policy_prefill=args.prefill_earlier_grades,
                                         **({"policy": {"config": chk["config_version"], "pack": args.policy_pack}} if args.policy_pack else {}))
         head_html = ("<tr><th>condition</th><th class='agentonly'>agent answer and location</th>"
                      "<th class='whycol agentonly'>what it means / why</th>"
-                     + ("<th class='whycol agentonly'>vs report</th>" if labels is not None else "") + "</tr>")
+                     + (("<th class='agentonly refcol'>CT-RATE report label<div class='refnote'>from the report text; &ldquo;not mentioned&rdquo; is not &ldquo;absent&rdquo;</div></th>")
+                        if args.reference_columns else
+                        ("<th class='whycol agentonly'>vs report</th>" if labels is not None else "")) + "</tr>")
         tip_html = ("<div class='tip agentonly'><b>&#128073; How to read this page:</b> each answer shows <b>where</b> first "
                     "(lobe names). A region is lung in an HU range picked by the tool, not a confirmed finding. Numbers are "
                     "under each answer's <b>Numbers</b> button and in the <b>Measurement panel</b>. Click a row with a blue "
@@ -509,7 +556,7 @@ const DATA = {json.dumps(data)};
             assert not left, f"corrected copy still contains: {left}"
             page = page.replace("checklist_viewer_v4_canvas2d, form grades_v2", "checklist_viewer_v4_canvas2d, form grades_v2, corrected wording copy", 1)
         if args.policy_pack:
-            page = policy_pack_page(page, payload_html, chk, ev, args.policy_pack, args.earlier_grades_csv)
+            page = policy_pack_page(page, payload_html, chk, ev, args.policy_pack, args.earlier_grades_csv, args.prefill_earlier_grades)
         code_only = page.replace(payload_html, "")          # the base64 payload can contain any letter sequence by chance
         assert "niivue" not in code_only.lower() and "webgl" not in code_only.lower(), "viewer library code left in a v4 page"
     elif V3:

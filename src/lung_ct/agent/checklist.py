@@ -22,8 +22,9 @@ MEASURED = {
     "pericardial_effusion": (["E73"], None),
     "cardiomegaly": (["E76"], None),
     "arterial_calcification": (["E78"], None),
+    "lung_nodule": (["E97"], None),         # v3_10: count of candidates outlined by the lung_nodules segmentation task
 }
-CONTEXT_ROWS = {"atelectasis": ["E90"], "cardiomegaly": ["E74", "E75", "E77"], "lung_density": ["E90"],
+CONTEXT_ROWS = {"lung_nodule": ["E98"], "atelectasis": ["E90"], "cardiomegaly": ["E74", "E75", "E77"], "lung_density": ["E90"],
                 "pericardial_effusion": ["E79"]}
 
 
@@ -60,6 +61,9 @@ def _classifier_vote(key: str | None, rows: dict, hi: float, lo: float) -> tuple
 
 
 def _side_text(rows: dict, c: dict) -> str | None:
+    lr = c.get("location_row")          # v3_10: a row that already holds the location in words (nodule candidates: lobes)
+    if lr and isinstance(rows.get(lr, {}).get("where"), str):
+        return rows[lr]["where"]
     if c["key"] == "pleural_effusion" and "E71" in rows and "E72" in rows:
         l, r = rows["E71"]["value"] or 0, rows["E72"]["value"] or 0
         if l + r == 0:
@@ -199,6 +203,8 @@ def build_checklist(ev: dict, readers: dict, ck: dict, hi: float = 0.7, lo: floa
             it.update(status="cannot tell", basis=f"predicted mask below the provisional reporting limit ({mv:g} {c.get('unit', '')}; limits "
                                                   f"{c['present_at_least']:g} / {c['absent_below']:g} {c.get('unit', '')}, unchanged, not validated "
                                                   f"diagnostic boundaries); a predicted mask cannot establish absence")
+            if (c.get("mask_wording") or {}).get("basis_empty"):          # v3_10: wording for a count, not a volume
+                it["basis"] = c["mask_wording"]["basis_empty"].format(value=mv)
             if cv == "present":
                 it["flags"].append(f"classifier says present (p={p:.2f})")
         elif ms in ("present", "absent"):
@@ -208,6 +214,8 @@ def build_checklist(ev: dict, readers: dict, ck: dict, hi: float = 0.7, lo: floa
             if ms == "present" and (c.get("mask_wording") or {}).get("headline_present"):     # v3_8: no 'present >= / absent <' wording
                 it["basis"] = (f"predicted mask only ({mv:g} {c.get('unit', '')}, at or above the provisional {c['present_at_least']:g} {c.get('unit', '')} "
                                f"reporting limit; limits unchanged, not validated diagnostic boundaries)")
+                if c["mask_wording"].get("basis_present"):                # v3_10
+                    it["basis"] = c["mask_wording"]["basis_present"].format(value=mv)
             if ms == "present":
                 it["location"] = _side_text(rows, c)
             opp = "absent" if ms == "present" else "present"

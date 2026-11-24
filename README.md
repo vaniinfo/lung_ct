@@ -265,6 +265,23 @@ Output `runs/P5_airway_*`: per case `airway_branches.csv`, `airway_summary.json`
 `airway_tree_qc.png` (centreline on CT coronal minIP slab and on the mask MIP); run
 `summary.csv` (lung volumes + tree metrics), `failures.csv`, `run_manifest.json`.
 
+
+### Phase 5 extension: mask-derived airway calibre and tapering estimates (written 2026-11-23, not yet run)
+
+**In plain words:** for each airway branch we estimate how wide the air channel is and how quickly it narrows, in
+millimetres. The numbers are estimates computed from the predicted airway outline, not airway-diameter measurements
+made on the CT image, and they are not validated. They are for exploratory bronchiectasis research and do not detect
+or diagnose it. The current data (14 report-labelled scans of 85) can check the pipeline, not detection performance. AirQuant is not used (it needs MATLAB); this is our own Python code.
+
+Full description, units, quality flags, limits and validation plan: `docs/AIRWAY_BRONCHIECTASIS_MEASURES.md`.
+The Phase 5 baseline code and its `runs/P5_airway_*` results are not changed.
+
+```bash
+python scripts/airway_measure.py --seg-run runs/P2_seg_10cases_<ts>      # -> runs/P6_airway_measures_*
+python scripts/airway_group_compare.py --measure-run runs/P6_airway_measures_<ts> --labels <labels.csv>     --splits runs/airway_splits_seed20261123.json --seed 20261123          # patient-level splits; test split locked
+python -m pytest tests/test_airway_calibre.py -q                         # synthetic tubes; not yet run
+```
+
 ## Clinician review package
 
 **In plain words:** package the scans and results so a doctor can score them independently, first without seeing the AI's answers, then comparing them, so we get a fair human check of the AI.
@@ -526,6 +543,31 @@ python scripts/pleural_compare_report.py --a $PREP/full/metrics_A_totalsegmentat
 python scripts/pleural_armB_outside_chest.py --manifest $PREP/full/manifest_armB.json --armA-manifest $PREP/full/manifest_armA.json --out $PREP/full   # descriptive only
 python scripts/pleural_armB_class_review.py --manifest $PREP/full/manifest_armB.json --armA-manifest $PREP/full/manifest_armA.json --qc $PREP/full/qc_armB.csv --out $PREP/full   # per-scan review of class-check warnings
 python scripts/pleural_compare_freeze.py --run $PREP    # freeze record: hashes, model identity, environments, count verification
+```
+
+Viewer pack M6 (v3_8 pages with the reviewer's earlier grades filled in and two reference columns; M5 keeps the empty form):
+
+```bash
+python scripts/build_policy_pack.py --pack M6 --folder runs/M6_policy_v3_8_prefilled_20261123 --checklist checklist_v3_8     --rows runs/E15_dense_lung_inventory_replay_20261123 --prefill-earlier-grades --reference-columns
+python scripts/check_prefilled_pack.py --folder runs/M6_policy_v3_8_prefilled_20261123 --out runs/V4_M6_viewer_check_20261123 --browser edge
+```
+
+Policy v3_9 (current default: v3_8 with the atelectasis rule of v3_2 to v3_5 restored) and its pack M7:
+
+```bash
+python scripts/rescore_with_inventory_rows.py --pages-file runs/test_logs/pages_58runs_with_v3_4.txt --rows runs/E15_dense_lung_inventory_replay_20261123     --config configs/checklist_v3_9.json --compare configs/checklist_v3_8.json --out runs/E18_atelectasis_rule_restored_v3_9_20261123/rescore_v3_9.json
+python scripts/build_policy_pack.py --pack M7 --folder runs/M7_policy_v3_9_prefilled_20261123 --checklist checklist_v3_9     --rows runs/E15_dense_lung_inventory_replay_20261123 --prefill-earlier-grades --reference-columns
+python scripts/check_prefilled_pack.py --folder runs/M7_policy_v3_9_prefilled_20261123 --out runs/V5_M7_viewer_check_20261123 --browser edge
+```
+
+Policy v3_10 (v3_9 plus the lung nodule answer from TotalSegmentator `lung_nodules` candidates; four graded cases) and pack M8:
+
+```bash
+RUNS="runs/A1_agent_valid_301_a_2_20261118_152058 runs/A1_agent_valid_541_a_2_20261118_151640 runs/A1_agent_valid_832_a_2_20261118_094216 runs/A1_agent_valid_988_a_2_20261118_153023"
+python scripts/nodule_evidence_rows.py --runs $RUNS --base-rows runs/E15_dense_lung_inventory_replay_20261123 --out runs/E19_nodule_rows_20261123
+python scripts/rescore_with_inventory_rows.py --pages-file runs/test_logs/pages_4graded.txt --rows runs/E19_nodule_rows_20261123     --config configs/checklist_v3_10.json --compare configs/checklist_v3_9.json --out runs/E19_nodule_rows_20261123/rescore_v3_10.json
+python scripts/build_policy_pack.py --pack M8 --folder runs/M8_policy_v3_10_prefilled_20261123 --checklist checklist_v3_10     --rows runs/E19_nodule_rows_20261123 --prefill-earlier-grades --reference-columns
+python scripts/check_prefilled_pack.py --folder runs/M8_policy_v3_10_prefilled_20261123 --out runs/V6_M8_viewer_check_20261123 --browser edge
 ```
 
 Result (development data, 213 scans; `runs/E17_pleural_model_comparison_prep_20261123/REPORT.md`; plain summary in

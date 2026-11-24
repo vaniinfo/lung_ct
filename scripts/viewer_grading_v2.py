@@ -273,7 +273,10 @@ POLICY_AGREEMENT_TEXT = {"suggested_reviewer_present": "segmentation suggested i
                          "suggested_reviewer_absent": "segmentation suggested it; reviewer: absent"}
 
 
-def policy_js(js: str) -> str:
+PREFILL_EXTRA_COLS = ["answer_origin", "carried_from_policy", "carried_from_saved_utc"]
+
+
+def policy_js(js: str, carried: bool = False) -> str:
     """Grading script for a policy-labelled pack (v3_8 and later). The base script is left untouched, so earlier pages rebuild
     byte-identically. Differences:
       - own storage key per policy and pack: grades typed on a page of another policy are never carried over;
@@ -308,11 +311,29 @@ def policy_js(js: str) -> str:
         "       it.mask_state, it.threshold_answer, it.threshold_limits].map(q).join(','); });\n"
         "     lines[lines.length - 1] += ',' + [G.policy.config, G.policy.pack, '', '', '', '', '', '', ''].map(q).join(','); }\n"
         "   const blob = new Blob(")
+    if carried:
+        # Pack with the reviewer's earlier grades filled in (asked for by the project owner, pack M6). Every exported row says whether the
+        # answer was carried over unchanged from the earlier grade, changed on this page, or entered on this page, and which policy
+        # and date the earlier grade was made on. A carried-over answer is NOT a new assessment of this page's wording.
+        rep("     'Earlier grades were made on other pages and are not copied into this form.'; bar.appendChild(pn); }\n",
+            "     'Your earlier grades (made on a page showing ' + (G.prefill ? G.prefill.made_on : 'an earlier policy') + ') are filled in below. ' +\n"
+            "     'The answers on this page may differ from that page: please check each grade and change it where needed.'; bar.appendChild(pn); }\n")
+        rep("   const blob = new Blob(",
+            "   { const f = x => x ? [x.answer || '', x.severity || '', x.confidence || '', x.comment || '', (x.loc && x.loc.status) || '',\n"
+            "         ((x.loc && x.loc.where) || []).join(' ')].join('|') : '';\n"
+            "     const org = k => { const a = st.g[k], b = (st.prefilled && P && P.g[k]) || null;\n"
+            "       if (!a || !a.answer) return ''; if (!b || !b.answer) return 'entered_on_this_page';\n"
+            "       return f(a) === f(b) ? 'carried_over_from_earlier_grade_unchanged' : 'changed_on_this_page'; };\n"
+            "     lines[0] += ',' + " + json.dumps(",".join(PREFILL_EXTRA_COLS)) + ";\n"
+            "     G.items.forEach((it, i) => { const o = org(it.key), c = o && o !== 'entered_on_this_page';\n"
+            "       lines[i + 1] += ',' + [o, c ? P.made_on : '', c ? P.saved_utc : ''].map(q).join(','); });\n"
+            "     lines[lines.length - 1] += ',,,'; }\n"
+            "   const blob = new Blob(")
     return js
 
 
 def grading_script(case_id: str, run_name: str, config: str, chk: dict, viewer_build: str, prefill: dict | None = None,
-                   blinded: bool = False, policy: dict | None = None) -> str:
+                   blinded: bool = False, policy: dict | None = None, allow_policy_prefill: bool = False) -> str:
     if blinded and prefill:
         raise ValueError("a staged (blinded) page cannot be pre-filled with earlier grades")
     data = {"case_id": case_id, "run": run_name, "config": config, "form": FORM_VERSION, "viewer": viewer_build,
@@ -320,8 +341,10 @@ def grading_script(case_id: str, run_name: str, config: str, chk: dict, viewer_b
     if policy is None:
         return "<script>\n" + JS.replace("__GRADING__", json.dumps(data)) + "\n</script>"
     from lung_ct.agent.checklist import export_row      # same definitions as the report / CSV export of the agent
-    if prefill:
-        raise ValueError("a policy-labelled page is never pre-filled: earlier grades were made on a page showing another policy")
+    if prefill and not allow_policy_prefill:
+        raise ValueError("a policy-labelled page is not pre-filled unless asked for explicitly: earlier grades were made on a page showing another policy")
+    if prefill and not prefill.get("made_on"):
+        raise ValueError("carried-over grades must name the policy they were made on")
     if policy["config"] != config:
         raise ValueError("policy label and checklist version differ")
     by = {i["key"]: i for i in chk["items"]}
@@ -332,4 +355,4 @@ def grading_script(case_id: str, run_name: str, config: str, chk: dict, viewer_b
         it.update(category=r["current_assessment"], headline_shown=r["headline_shown"], decision_basis=r["decision_basis"], mask_state=r["mask_state"],
                   threshold_answer=r["provisional_threshold_result_NOT_A_CURRENT_ASSESSMENT"], threshold_limits=r["provisional_limits"])
     data["policy"] = policy
-    return "<script>\n" + policy_js(JS).replace("__GRADING__", json.dumps(data)) + "\n</script>"
+    return "<script>\n" + policy_js(JS, carried=bool(prefill)).replace("__GRADING__", json.dumps(data)) + "\n</script>"
