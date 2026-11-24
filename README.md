@@ -4,6 +4,8 @@ Local, reproducible research pipeline for public 3D chest CT: ingestion, geometr
 lung segmentation, volume quantification, CT-capable LVLM inference, reviewable reports.
 Research use only - no diagnostic or clinical validation claims. See `PROJECT_GUIDELINES.md` and `docs/STATUS.md`.
 
+**Project direction:** [Project plan and agent pipeline](docs/PROJECT_PLAN.md) · [Paper novelty (candidate contributions)](docs/PAPER_NOVELTY.md) · [Model research report](docs/research/Chest%20CT%20model%20candidates.md)
+
 ## Setup
 
 Requires Python 3.11. Data, model weights and run outputs (`data/`, `models/`, `runs/`) are
@@ -318,3 +320,218 @@ Output `runs/P6_clinician_review_v1_*/`: `PACKAGE_LAYOUT.md`, `handoff_1_blinded
 use the frozen exploratory rules in `configs/review_flag_rules_v1.json`.
 
 Data (`data/`), weights (`models/`) and run artifacts (`runs/`) are git-ignored.
+
+## Location-first checklist viewer and grading form v2 (checklist_v3_4)
+
+Plain summary: reviewers describe findings and say where they are; they do not quote millilitres or
+percentages. The page therefore shows the lobe names first and keeps every number in a measurement
+panel. This is a change in presentation. It does not validate, or change, any cut-off: `checklist_v3_4`
+has exactly the decision rules and measurements of `checklist_v3_3`.
+
+What is new:
+
+- **Per-lobe distribution rows** `E83` (ground-glass-range region), `E89` (consolidation-range region),
+  `E91` (dense lung next to pleural fluid): mL, % of that lobe and % of the selected region for every
+  lobe, plus the share of the region within 5 mm of a predicted fissure. Nothing is dropped.
+- **Provisional lobe-naming rule** (`location_reporting` in `configs/checklist_v3_4.json`,
+  `location_rule_v1_provisional`): a lobe is named when it holds at least 10% of the selected region.
+  Fixed in advance, not fitted, not validated. Do not tune it on fresh evaluation cases.
+- **Wording**: the region is an "HU-selected region"; for a "cannot tell" answer it is a "candidate
+  region, not a confirmed finding". Lobe names only (TotalSegmentator outlines); thirds of lung height are
+  geometric and are never called segments. "Lobe assignment uncertain" is flagged near fissures, outside
+  lobe outlines, on poorly inflated lungs and when pleural effusion is present.
+- **Viewer v2** (`--viewer v2`): location first, a "Numbers" box per answer (opens on click) and a
+  measurement panel on the page; every percentage names its denominator.
+- **Grading form `grades_v2`**: finding (present / absent / can't tell) and location (lobes,
+  "Indeterminate", or "Not assessed" = default; pleural effusion by side) are separate fields.
+  Grades saved with form v1 still load; their location is `not_recorded_form_v1`.
+- **Staged page** (`--blinded`): step 1 shows the scan and the form only; the tool's answers,
+  locations, measurements and outlines appear after "Save and lock step 1". Later changes are stored
+  next to the locked answers with a timestamp. No radiology report in staged pages. The hidden content
+  is inside the HTML file: this is a reading procedure, not a security barrier.
+
+```bash
+# 1. add the per-lobe rows to finished runs; every existing row is recomputed and must match exactly
+python scripts/add_lobe_distribution.py --pages-file runs/test_logs/pages_test20b_v3.txt \
+    runs/test_logs/pages_test20c_v3_1.txt runs/test_logs/pages_test20soft_v3.txt
+# 2. apply checklist_v3_4 (writes checklist_checklist_v3_4.json next to the others)
+python scripts/rescore_checklist.py --pages-file runs/test_logs/pages_test20c_v3_1.txt --config configs/checklist_v3_4.json
+# 3. prove that no measurement and no decision changed
+python scripts/verify_location_update.py --pages-file runs/test_logs/pages_test20b_v3.txt \
+    runs/test_logs/pages_test20c_v3_1.txt runs/test_logs/pages_test20soft_v3.txt \
+    --snapshot runs/test_logs/snapshot_before_v3_4 --lobe-verification runs/E12_lobe_distribution_<ts>
+# 4. pages: location-first, and staged
+python scripts/build_viewer_page.py --run runs/A1_agent_<case>_<ts> --checklist-file checklist_checklist_v3_4.json \
+    --rule-based --viewer v2 --out runs/M2_location_first_20261122/viewer_<case>.html
+python scripts/build_viewer_page.py --run runs/A1_agent_<case>_<ts> --checklist-file checklist_checklist_v3_4.json \
+    --rule-based --viewer v2 --blinded --out runs/M2_location_first_20261122/staged_<case>.html
+# 5. collect returned grades (form v1 and v2 files can be mixed)
+python scripts/collect_grades.py --folder runs/grades_received
+```
+
+`build_location_first_viewers.bat` runs step 4 for the four meeting cases. Without `--viewer v2` the
+page is built exactly as before (viewer v1, form v1), so `build_meeting_viewers.bat` still reproduces the
+first pack. The finding-mask audit review page (`scripts/build_blinded_viewer.py`, `blinded_viewer_v2`,
+record `audit_review_v2`, protocol draft `configs/audit_review_protocol_v0_1_draft.json`) also asks in
+stage 1, before the lobe outlines are shown, whether the finding is there and where the reader sees it.
+
+Other additions on the same working tree: `scripts/segment_extra_task.py` (one extra TotalSegmentator
+task without touching existing outlines) and `scripts/nodule_candidates.py` (exploratory table of
+`lung_nodules` outlines; no checklist rule uses it).
+
+### Viewer v3: same page, lighter loader (`--viewer v3`)
+
+One standalone HTML for file://, as before. The CT is stored losslessly in less space and verified in the
+browser (checksum and SHA-256), payloads are decoded step by step, only one overlay is loaded at a time,
+and loading / error states are shown (`scripts/viewer_v3.py`). Layout, answers, grading form and CSV are
+those of viewer v2.
+
+```bash
+python scripts/build_viewer_page.py --run runs/A1_agent_<case>_<ts> --checklist-file checklist_checklist_v3_4.json \
+    --rule-based --viewer v3 --out runs/M2_location_first_20261122/viewer_<case>_v3.html
+# open the unmodified file from file:// in Chrome or Edge and check it (start-up state, switching, grading, memory)
+python scripts/test_viewer_page.py --page runs/M2_location_first_20261122/viewer_<case>_v3.html --browser chrome
+python scripts/test_viewer_page.py --page runs/M2_location_first_20261122/viewer_<case>_v3.html --browser edge --gpu
+```
+
+Tested on the development workstation only; see `docs/STATUS.md` for the before / after numbers and limits.
+
+### Viewer v4: 2D canvas page for laptops with integrated graphics (`--viewer v4`)
+
+No WebGL and no viewer library: one slice is drawn at a time on an ordinary canvas. Voxels are reordered to RAS+
+from the affine at build time (no resampling); oblique scans are refused. Layout, answers, grading form and CSV
+are those of viewer v2. Test report: `docs/VIEWER_V4_TEST_REPORT.md`. Not yet tried on the reviewer's laptop.
+
+```bash
+python scripts/build_viewer_page.py --run runs/A1_agent_<case>_<ts> --checklist-file checklist_checklist_v3_4.json \
+    --rule-based --viewer v4 --out runs/M3_canvas_viewer_20261122/viewer_<case>_v4.html      # add --blinded for the staged page
+python scripts/test_canvas_viewer.py --synthetic --browser edge --gpu-mode igpu               # geometry on a phantom, 48 orientations
+python scripts/test_canvas_viewer.py --page runs/M3_canvas_viewer_20261122/viewer_<case>_v4.html --browser chrome --gpu-mode igpu
+```
+
+`build_canvas_viewers.bat` builds the four meeting cases. Viewer v3 (WebGL) is not a confirmed fix for
+integrated graphics.
+
+## Checklist v3_5, v3_6 and the PleThora pleural-effusion check
+
+Since 2026-11-23 new agent runs use `configs/checklist_v3_5.json`: a classifier score is shown as supporting
+evidence but can no longer make an answer "not suggested". `configs/checklist_v3_4.json` is kept for comparison
+(`--checklist-config configs/checklist_v3_4.json`). To apply v3_5 to finished runs without recomputing anything:
+
+```bash
+python scripts/rescore_checklist.py --pages-file runs/test_logs/pages_58runs_with_v3_4.txt --config configs/checklist_v3_5.json
+```
+
+External check of the pleural-effusion outline against expert outlines (PleThora, public TCIA data, about 4.5 GB
+on disk; results in `runs/E14_plethora_pleural_effusion_<timestamp>/REPORT.md`). Put the PleThora zips and the
+spreadsheet from the TCIA page into `data/raw/plethora/download/` and unzip them into `effusions/` and `thorax/`, then:
+
+```bash
+python -I scripts/plethora_fetch.py                                           # core env: 78 effusion + 78 no-effusion scans
+environments/segmentation/Scripts/python.exe scripts/plethora_segment.py     # GPU, about 30-40 s per scan
+python -I scripts/plethora_compare.py                                        # core env: results.csv, summary.json
+```
+
+This is development evidence from lung-cancer planning scans; it does not validate any limit.
+
+### checklist_v3_6 (default for new runs since 2026-11-23)
+
+`configs/checklist_v3_6.json` = v3_5 plus two things, with every limit unchanged:
+
+- **Dense-lung candidates are kept and tagged, not removed.** Dense lung next to predicted pleural fluid or at the back
+  of the lung stays in the evidence (rows E92-E94) with a spatial tag. It is not called compressed lung, and
+  atelectasis is no longer answered from it. Background: `docs/DENSE_LUNG_EVIDENCE.md`.
+- **Pleural effusion wording.** "No fluid outlined" (empty mask) and "low volume outlined" (under 5 mL) are worded
+  differently, neither as excluding an effusion; volumes are called estimates from predicted masks.
+
+Replay on finished runs (adds `checklist_checklist_v3_6.json` to each run, rewrites nothing; about 3 min per scan,
+use `--part i/n` for parallel workers and a final call without `--part` for the summary):
+
+```bash
+python scripts/dense_lung_inventory_replay.py --pages-file runs/test_logs/pages_58runs_with_v3_4.txt --out runs/E15_dense_lung_inventory_replay_<date>
+```
+
+`--checklist-config configs/checklist_v3_6.json`, `checklist_v3_5.json` or `checklist_v3_4.json` reproduce the earlier behaviour.
+
+### checklist_v3_7 (default for new runs since 2026-11-23) and the empty-mask root-cause check (E16)
+
+`configs/checklist_v3_7.json` = v3_6 plus one correction, with every limit unchanged: a predicted pleural-fluid mask
+below the reporting limit (empty, or under 5 mL) gives "cannot tell", never "absent". The answer of the unchanged
+20 mL / 5 mL rule is stored as `historical_rule_answer`. All numeric limits are provisional reporting limits of a
+development tool, not validated diagnostic boundaries.
+
+```bash
+# re-score finished runs (adds checklist_checklist_v3_7.json, rewrites nothing)
+python scripts/rescore_with_inventory_rows.py --pages-file runs/test_logs/pages_58runs_with_v3_4.txt \
+    --rows runs/E15_dense_lung_inventory_replay_20261123 --config configs/checklist_v3_7.json \
+    --compare configs/checklist_v3_6.json --out runs/E16_empty_mask_root_cause_20261123/rescore_v3_7.json
+```
+
+Why the model returns an empty mask on some effusion scans (`runs/E16_empty_mask_root_cause_20261123/REPORT.md`):
+
+```bash
+OUT=runs/E16_empty_mask_root_cause_20261123
+IDS="LUNG1-013 LUNG1-113 LUNG1-170 LUNG1-195 LUNG1-249 LUNG1-299 LUNG1-016 LUNG1-285 LUNG1-301 LUNG1-051"
+python -I scripts/plethora_source_audit.py --out $OUT/source_audit.json $IDS                      # DICOM against NIfTI
+environments/segmentation/Scripts/python.exe scripts/plethora_empty_mask_trace.py $IDS             # GPU, about 1 min per scan
+python scripts/plethora_empty_mask_report.py --out $OUT $IDS                                       # table and overlays
+environments/segmentation/Scripts/python.exe scripts/plethora_counterfactual_density.py --out $OUT/counterfactual_density.json $IDS
+python -I scripts/ts_effusion_training_labels.py --out $OUT/training_labels                        # labels only, about 90 MB
+python -I scripts/ts_effusion_training_density.py --attrs $OUT/training_labels/training_label_attributes.csv --out $OUT/training_labels
+```
+
+Diagnostic only: no model is trained and no filter or limit is added.
+
+### checklist_v3_8 (default for new runs since 2026-11-23), exact stage audit, comparison plan
+
+`configs/checklist_v3_8.json` = v3_7 plus one wording change: a positive pleural-effusion answer that rests only on
+the predicted mask is headlined "Pleural effusion suggested by segmentation". The answer of the unchanged 20 mL /
+5 mL rule is stored separately as `provisional_threshold_result`. `--checklist-config configs/checklist_v3_7.json`
+reproduces the earlier behaviour.
+
+```bash
+OUT=runs/E16_empty_mask_root_cause_20261123
+python scripts/rescore_with_inventory_rows.py --pages-file runs/test_logs/pages_58runs_with_v3_4.txt \
+    --rows runs/E15_dense_lung_inventory_replay_20261123 --config configs/checklist_v3_8.json \
+    --compare configs/checklist_v3_7.json --out $OUT/rescore_v3_8.json
+# exact voxel counts, grids and resampling calls at every stage (needs the trace above; GPU, about 30 s per scan)
+environments/segmentation/Scripts/python.exe scripts/plethora_stage_audit.py --out $OUT/stage_audit $IDS
+python scripts/plethora_alignment_check.py --out $OUT/alignment_by_reviewer_file.csv   # every reviewer file, from image content
+```
+
+The PleThora reference is the `first_reviewer` file (see the E16 report, section 3). Plan for comparing the current
+model with one alternative, not started: `docs/PLEURAL_MODEL_COMPARISON_PLAN.md`.
+
+### Export, scoring and comparison preparation (E17, 2026-11-23)
+
+The v3_8 headline survives export and scoring: `lung_ct.agent.checklist.assessment_category()` gives the current
+assessment (`present`, `suggested`, `absent`, `cannot tell`, `cannot assess`). "Suggested" (a positive answer from a
+predicted mask only) is never counted as a confirmed finding, and the provisional threshold result is never scored.
+
+```bash
+PREP=runs/E17_pleural_model_comparison_prep_20261123
+python scripts/export_checklist_csv.py --pages-file runs/test_logs/pages_58runs_with_v3_4.txt     --checklist-file checklist_checklist_v3_8.json --out runs/E16_empty_mask_root_cause_20261123/checklist_v3_8_export.csv
+python scripts/score_checklist.py --pages-file runs/test_logs/pages_58runs_with_v3_4.txt     --checklist-file checklist_checklist_v3_8.json --label v3_8_dev58
+python -I scripts/pleural_armB_inspect.py --out $PREP                # alternative model: file list and plans, no weights
+python scripts/pleural_compare_metrics.py --manifest $PREP/pilot_manifest_armA.json --out $PREP/pilot   # current model, 14 pilot scans
+# alternative model (GPU, separate environment environments/pleural_v1; a version separation, not a security sandbox)
+environments/pleural_v1/Scripts/python.exe scripts/pleural_armB_run.py --manifest $PREP/pilot_manifest_armB.json --out $PREP/pilot
+environments/pleural_v1/Scripts/python.exe scripts/pleural_armB_run.py --manifest $PREP/full/manifest_armB.json --out $PREP/full
+# LUNG1-104 only: save and score the mask although its "lung" label is 18 L (flagged, not hidden)
+environments/pleural_v1/Scripts/python.exe scripts/pleural_armB_run.py --manifest $PREP/full/rerun_LUNG1-104/manifest_armB.json --out $PREP/full/rerun_LUNG1-104 --lung-guard warn
+python scripts/pleural_compare_metrics.py --manifest $PREP/full/manifest_armA.json --out $PREP/full
+python scripts/pleural_compare_metrics.py --manifest $PREP/full/manifest_armB.json --out $PREP/full
+python scripts/pleural_armB_qc.py --manifest $PREP/full/manifest_armB.json --armA-manifest $PREP/full/manifest_armA.json --run-log $PREP/full/run_log_B_task307_pleuralfinal.json --out $PREP/full
+python scripts/pleural_compare_report.py --a $PREP/full/metrics_A_totalsegmentator_315.csv --b $PREP/full/metrics_B_task307_pleuralfinal.csv --manifest $PREP/full/manifest_armB.json --out $PREP/full
+python scripts/pleural_armB_outside_chest.py --manifest $PREP/full/manifest_armB.json --armA-manifest $PREP/full/manifest_armA.json --out $PREP/full   # descriptive only
+python scripts/pleural_armB_class_review.py --manifest $PREP/full/manifest_armB.json --armA-manifest $PREP/full/manifest_armA.json --qc $PREP/full/qc_armB.csv --out $PREP/full   # per-scan review of class-check warnings
+python scripts/pleural_compare_freeze.py --run $PREP    # freeze record: hashes, model identity, environments, count verification
+```
+
+Result (development data, 213 scans; `runs/E17_pleural_model_comparison_prep_20261123/REPORT.md`; plain summary in
+`docs/PLEURAL_EFFUSION_LEARNINGS.md`): the comparison of the two pipelines as implemented here does not support
+replacing the current pipeline. Against the PleThora expert outlines the median Dice is 0.376 (current) and 0.414
+(alternative); 6 scans improved, 4 worsened, 67 were similar. The alternative recovers none of the six empty-mask
+misses, and on long scans it marks tissue outside the chest. This does not show the models are equivalent and does not
+validate the current model. The comparison is closed; no further model runs without a new experiment brief.
+

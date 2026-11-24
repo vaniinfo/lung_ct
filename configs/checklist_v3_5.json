@@ -1,0 +1,366 @@
+{
+  "config_version": "checklist_v3_5",
+  "frozen_utc": "2026-11-22",
+  "status": "ADOPTED FOR THE NEXT ITERATION (project decision 2026-11-23), NOT VALIDATED. checklist_v3_4 with one policy change: a low score of the unvalidated classifier can no longer establish absence. Classifier scores stay in the output as supporting evidence only (shown in the basis text and flags); they cannot set or override any answer. Chosen after four development cases graded by the clinician reviewer on OPEN pages (not blinded). It withdraws answers; it does not detect anything. checklist_v3_4 is kept unchanged for comparison. Still to do: evaluate on fresh patients with staged pages.",
+  "statuses": [
+    "present",
+    "absent",
+    "cannot tell",
+    "cannot assess"
+  ],
+  "decision_rule": [
+    "1. If the condition needs contrast and the scan is not a contrast scan: 'cannot assess'.",
+    "2. If a measurement exists and its value is outside the grey zone, the measurement decides (basis 'measured'). The classifier and AI readers are flagged for the reviewer when they disagree; they do not overrule.",
+    "2b. Image quality gates: a measurement over its noise limit is 'not measured'; with poorly inflated lungs emphysema cannot be 'absent'; ground-glass and enlarged heart cannot be 'present'.",
+    "3. Without a decisive measurement, (v3_5) the classifier cannot establish absence: the answer is 'cannot tell'. Up to v3_4 'absent' needed the classifier <= low threshold.",
+    "4. Everything else: 'cannot tell'. AI readers are shown but do not vote (readers_vote = false); the classifier alone never makes a condition 'present'."
+  ],
+  "banned_terms": [
+    "opacity",
+    "opacities",
+    "opacification"
+  ],
+  "banned_terms_note": "The clinician reviewer (2026-11-15): radiologist reviewers will not accept the generic word. Use ground-glass, consolidation, or 'increased lung density, type not determined'.",
+  "measurements": {
+    "contrast_aorta_hu": {
+      "non_contrast_below": 100,
+      "contrast_above": 150,
+      "note": "median HU of the eroded TotalSegmentator aorta; unenhanced blood is about 30-60 HU"
+    },
+    "dependent_band_fraction": 0.2,
+    "dependent_band_note": "Per axial slice and lung, the most posterior 20% of the lung's front-to-back extent is 'dependent' (gravity-related density in a supine patient). Density there is reported but not used to call ground-glass or consolidation.",
+    "ground_glass_hu": [
+      -700,
+      -300
+    ],
+    "consolidation_hu": [
+      -300,
+      100
+    ],
+    "density_lung_erosion_voxels": 2,
+    "density_exclude": [
+      "lung_vessels/lung_arteries",
+      "lung_vessels/lung_veins",
+      "lung_vessels/lung_airways",
+      "lung_vessels/lung_airways_wall"
+    ],
+    "density_exclude_dilation_voxels": 1,
+    "density_opening_voxels": 1,
+    "aortic_calcium_hu": 130,
+    "aortic_calcium_min_component_voxels": 3,
+    "aortic_calcium_mask_dilation_voxels": 1,
+    "aortic_calcium_min_peak_hu": 300,
+    "aortic_calcium_note": "Added 2026-11-17 after the first CT-RATE run (valid_5): with 1 mm slices, blood noise forms small clusters just above 130 HU. A calcium spot must now also contain at least one voxel >= 300 HU. Measurement fix, not a threshold change.",
+    "effusion_adjacent_mm": 15,
+    "lung_inflation": {
+      "median_hu_above": -780,
+      "volume_ml_below": 3000,
+      "note": "Well-inflated lungs at full inspiration usually have a median of about -820 to -870 HU and 4-7 litres; pilot case valid_827 (emphysema missed) had -746 HU and 2.5 L."
+    },
+    "emphysema_hu": -950,
+    "laa_cluster_min_voxels": 10,
+    "pericardial_thickness_grades_mm": {
+      "small_below": 10.0,
+      "large_above": 20.0
+    },
+    "pericardial_thickness_note": "E79 = diameter of the largest sphere that fits inside the predicted pericardial-fluid outline (3-D distance transform, mm). It is a property of the automatic mask, not a caliper measurement, and is not validated. From v3_5 new runs no longer attach a small / moderate / large wording to it. Evidence rows already written by earlier configs keep their old note.",
+    "lobe_distribution": {
+      "near_fissure_mm": 5.0,
+      "note": "Extra evidence rows E83 (ground-glass-range region), E89 (consolidation-range region) and E91 (dense lung next to pleural fluid): mL, % of that lobe and % of the selected region for every lobe, plus the share of the region within near_fissure_mm of a predicted boundary between two lobes of the same lung. Nothing is thresholded in these rows and no other row depends on them. 5 mm was fixed in advance (2026-11-22), not fitted."
+    },
+    "pericardial_thickness_show_grade": false
+  },
+  "conditions": [
+    {
+      "key": "ground_glass",
+      "label": "Ground-glass",
+      "ct_rate_label": null,
+      "measured_by": "non-dependent lung with HU -700 to -300, % of lung",
+      "present_at_least": 3.0,
+      "absent_below": 1.0,
+      "unit": "% of lung",
+      "classifier_key": "ground_glass",
+      "lung_location": true,
+      "note": "Partial volume around vessels and motion also fall in this band; type separation by HU alone is approximate.",
+      "poor_inflation": "no_present",
+      "absent_text": "No measurable ground-glass ({value:g}% of total lung; detection limit {limit:g}% of total lung).",
+      "poor_inflation_present_at_least": 30.0,
+      "poor_inflation_note": "With poorly inflated lungs ground-glass is 'present' only from 30% of lung; between 3% and 30% it stays 'cannot tell'."
+    },
+    {
+      "key": "consolidation",
+      "label": "Consolidation",
+      "ct_rate_label": "Consolidation",
+      "measured_by": "non-dependent lung with HU -300 to 100, mL",
+      "present_at_least": 30,
+      "absent_below": 5,
+      "unit": "mL",
+      "classifier_key": "consolidation",
+      "lung_location": true,
+      "absent_text": "No measurable consolidation (under {limit:g} mL; small patches can be missed)."
+    },
+    {
+      "key": "lung_density",
+      "label": "Increased lung density (ground-glass or consolidation)",
+      "ct_rate_label": "Lung opacity",
+      "measured_by": "ground_glass OR consolidation (non-dependent)",
+      "classifier_key": "lung_opacity",
+      "lung_location": true
+    },
+    {
+      "key": "atelectasis",
+      "label": "Atelectasis",
+      "ct_rate_label": "Atelectasis",
+      "classifier_key": "atelectasis",
+      "note": "Only collapse next to fluid is measured; other atelectasis relies on the classifier (absent only).",
+      "measured_by": "dense lung within 15 mm of a pleural effusion (E88), mL",
+      "present_at_least": 30,
+      "absent_below": null,
+      "unit": "mL"
+    },
+    {
+      "key": "lung_nodule",
+      "label": "Lung nodule",
+      "ct_rate_label": "Lung nodule",
+      "classifier_key": "lung_nodule",
+      "note": "No nodule detector in the pipeline yet."
+    },
+    {
+      "key": "emphysema",
+      "label": "Emphysema",
+      "ct_rate_label": "Emphysema",
+      "measured_by": "LAA-950 on lung minus airways (E31), % of lung",
+      "present_at_least": 6.0,
+      "absent_below": null,
+      "unit": "% of lung",
+      "classifier_key": "emphysema",
+      "note": "Present only when clearly high (>= 6% of total lung). Mild emphysema often gives a low value, so a low value means 'cannot tell', not 'absent'.",
+      "allow_classifier_absent": false,
+      "poor_inflation": "no_absent",
+      "absent_text": "Little dark lung ({value:g}% of total lung below -950 HU); mild emphysema cannot be excluded.",
+      "grey_text": "No emphysema above the tool's limit ({value:g}% of total lung below -950 HU; the tool calls emphysema present from {present:g}% of total lung). Mild emphysema cannot be ruled out with this measure.",
+      "grey_label": "below the limit of {present:g}% of total lung; mild cannot be ruled out"
+    },
+    {
+      "key": "bronchiectasis",
+      "label": "Bronchiectasis",
+      "ct_rate_label": "Bronchiectasis",
+      "classifier_key": "bronchiectasis",
+      "note": "Airway-tree measurements are not yet validated as bronchiectasis evidence (planned: airway-to-artery ratio)."
+    },
+    {
+      "key": "peribronchial_thickening",
+      "label": "Peribronchial thickening",
+      "ct_rate_label": "Peribronchial thickening",
+      "classifier_key": "peribronchial_thickening"
+    },
+    {
+      "key": "interlobular_septal_thickening",
+      "label": "Interlobular septal thickening",
+      "ct_rate_label": "Interlobular septal thickening",
+      "classifier_key": "septal_thickening"
+    },
+    {
+      "key": "mosaic_attenuation",
+      "label": "Mosaic attenuation",
+      "ct_rate_label": "Mosaic attenuation pattern",
+      "classifier_key": "mosaic_attenuation"
+    },
+    {
+      "key": "fibrotic_sequela",
+      "label": "Fibrotic (scarring) changes",
+      "ct_rate_label": "Pulmonary fibrotic sequela",
+      "classifier_key": "fibrotic_sequela"
+    },
+    {
+      "key": "pleural_effusion",
+      "label": "Pleural effusion",
+      "ct_rate_label": "Pleural effusion",
+      "measured_by": "TotalSegmentator pleural effusion mask, mL (both sides)",
+      "present_at_least": 20,
+      "absent_below": 5,
+      "unit": "mL",
+      "classifier_key": "pleural_effusion",
+      "absent_text": "No measurable pleural effusion (under {limit:g} mL; a thin rim of fluid can be missed)."
+    },
+    {
+      "key": "pericardial_effusion",
+      "label": "Pericardial effusion",
+      "ct_rate_label": "Pericardial effusion",
+      "measured_by": "TotalSegmentator pericardial effusion mask, mL",
+      "present_at_least": 50,
+      "absent_below": null,
+      "unit": "mL",
+      "classifier_key": "pericardial_effusion",
+      "note": "Reviewer (2026-11-21): any visible pericardial fluid is an effusion, there is no normal amount, and size is judged by thickness, not volume. The tool calls it present from 50 mL; a lower volume is 'cannot tell', never 'none', because the automatic outline can miss a thin rim. Greatest thickness (E79) is shown for information.",
+      "absent_text": "Little pericardial fluid measured ({value:g} mL); a small effusion cannot be excluded.",
+      "allow_classifier_absent": false
+    },
+    {
+      "key": "cardiomegaly",
+      "label": "Cardiomegaly (enlarged heart)",
+      "ct_rate_label": "Cardiomegaly",
+      "measured_by": "axial cardiothoracic ratio = widest heart / widest inner chest (lungs)",
+      "present_at_least": 0.55,
+      "absent_below": 0.5,
+      "unit": "ratio",
+      "classifier_key": "cardiomegaly",
+      "note": "Axial CT ratio, not the chest X-ray ratio; 0.50-0.55 is a grey zone.",
+      "poor_inflation": "no_present",
+      "absent_text": "Heart not enlarged by the axial heart-to-chest ratio ({value:g}; cut-off {limit:g}); the ratio can miss a mildly enlarged heart."
+    },
+    {
+      "key": "arterial_calcification",
+      "label": "Aortic wall calcification",
+      "ct_rate_label": "Arterial wall calcification",
+      "measured_by": "voxels >= 130 HU in/at the aorta mask (non-contrast only), mL",
+      "present_at_least": 0.1,
+      "absent_below": 0.02,
+      "unit": "mL",
+      "classifier_key": "arterial_calcification",
+      "note": "Only measurable without contrast (contrast-filled blood is also above 130 HU).",
+      "absent_text": "No measurable aortic wall calcium (under {limit:g} mL)."
+    },
+    {
+      "key": "coronary_calcification",
+      "label": "Coronary artery calcification",
+      "ct_rate_label": "Coronary artery wall calcification",
+      "classifier_key": "coronary_calcification"
+    },
+    {
+      "key": "lymphadenopathy",
+      "label": "Enlarged lymph nodes",
+      "ct_rate_label": "Lymphadenopathy",
+      "classifier_key": "lymphadenopathy",
+      "contrast_helps": true
+    },
+    {
+      "key": "hiatal_hernia",
+      "label": "Hiatal hernia",
+      "ct_rate_label": "Hiatal hernia",
+      "classifier_key": "hiatal_hernia"
+    },
+    {
+      "key": "medical_material",
+      "label": "Medical material (devices, wires, stents)",
+      "ct_rate_label": "Medical material",
+      "classifier_key": "medical_material"
+    },
+    {
+      "key": "pulmonary_embolism",
+      "label": "Pulmonary embolism",
+      "ct_rate_label": null,
+      "needs_contrast": true,
+      "note": "Needs a contrast CT (CT pulmonary angiogram)."
+    }
+  ],
+  "reliability": {
+    "contrast": "moderate - aorta density threshold; standard physiology, not validated here",
+    "effusion_masks": "moderate - TotalSegmentator pleural/pericardial effusion model (published validation by its authors), not validated on this project's data",
+    "cardiothoracic_ratio": "low-moderate - computed from predicted heart and lung masks; axial CT ratio differs from the chest X-ray ratio; not validated here",
+    "heart_volume": "moderate - TotalSegmentator heart mask; includes pericardium region",
+    "aortic_calcium": "low-moderate - HU threshold at the predicted aorta; nearby bone or contrast can add voxels",
+    "density_type": "low - HU bands inside predicted lungs; separates ground-glass from consolidation only approximately; partial volume and motion add voxels",
+    "dependent_density": "low - context only; gravity-related density at the back of the lungs is usually normal",
+    "noise": "moderate - standard deviation in the predicted aorta; plaques and mask edges add a little",
+    "lung_inflation": "moderate - volume and median density inside predicted lungs; thresholds provisional",
+    "laa_clusters": "low - uncalibrated, report only",
+    "emphysema_laa950": "moderate - standard measure on a standard kernel; insensitive to mild disease; depends on breath-in and reconstruction",
+    "pericardial_thickness": "low - largest sphere inside the automatic outline; not validated against a radiologist's measurement",
+    "lobe_distribution": "per-lobe split of an HU-selected region by TotalSegmentator lobe outlines; lobe outlines are less reliable near fissures, in collapsed or consolidated lung and on shallow-breath scans; not validated against clinician lobe grades"
+  },
+  "derived_from": "checklist_v3_4",
+  "readers_vote": false,
+  "noise": {
+    "mode": "not_measured",
+    "limits_hu": {
+      "emphysema": 45,
+      "calcium": 45,
+      "ground_glass": 45,
+      "consolidation": 60
+    },
+    "note": "Blood SD in the eroded aorta. Standard kernels typically give 20-40 HU."
+  },
+  "changes_from_v2": [
+    "Data: use the standard-kernel reconstruction (Philips B/A, Siemens Br40f...) instead of _a_1 (ctrate_fetch.py --recon soft).",
+    "Noise: no smoothing any more (it erased emphysema holes and added ground-glass). Each HU-threshold measurement is skipped ('not measured', so 'cannot tell') above its own blood-noise limit: emphysema, calcium and ground-glass 45 HU, consolidation 60 HU. On test20 every emphysema extra had noise 31-56 HU.",
+    "Breath-in check (E95 total lung volume, E96 median lung HU): poor inflation if median above -780 HU or volume below 3000 mL. Then emphysema cannot be 'absent' and ground-glass cannot be 'present'.",
+    "Emphysema: measured on lung minus airways (E31). A low value is no longer 'absent' (no absent_below), and the classifier alone cannot make it absent either. Dark-cluster count and LAA per lobe (E32, E33) shown, not used in decisions yet.",
+    "Collapse next to fluid: consolidation-range lung within 15 mm of a pleural effusion is removed from consolidation and reported as E88; atelectasis is 'present' if E88 >= 30 mL.",
+    "Unchanged: all other thresholds, readers shown but not voting."
+  ],
+  "changes_from_v3_1": [
+    "Wording only, no decision changes: 'absent' reached by a measurement is shown and written as 'none measured' / 'No measurable X (under limit)'; 'absent' from the classifier alone as 'not suggested'. Report writer told never to write 'no X' for these; the validator flags it. Reason: test20c misses were minimal findings (e.g. an 8 mm pleural rim measured as 0 mL)."
+  ],
+  "changes_from_v3_2": [
+    "Ground-glass with poorly inflated lungs: 'present' is kept when the value is at least 30% of lung (was: never 'present'). Reason: valid_301_a_2 measured 39.9% at 1.8 L lung volume and was 'cannot tell'; the clinician reviewer graded ground-glass present. On the 58 soft-kernel runs seen so far, poorly inflated lungs without a 'Lung opacity' label measured 3-24%, so 30% is above all of them. Chosen on seen cases: provisional.",
+    "Pericardial effusion: a low volume no longer gives 'none measured', and the classifier alone cannot clear it either (absent_below removed, allow_classifier_absent false); below 50 mL the answer is 'cannot tell'. Reason: The clinician reviewer graded a mild effusion present on valid_541_a_2 where 9.5 mL was measured, and present on valid_301_a_2 at 28.2 mL; on the 58 soft-kernel runs seen so far 3 of 9 report-labelled effusions measured under 20 mL. The 'present from 50 mL' limit is unchanged: lowering it to 25 mL was tested and gave 2 more found for 3 more extras. Cost: true 'absent' answers for this condition become 'cannot tell'.",
+    "Not a rule change: atelectasis on valid_301_a_2 was scored 'extra' against report labels; the clinician reviewer graded it present. The rule (compressed lung >= 30 mL next to pleural fluid) is unchanged.",
+    "Pericardial fluid thickness (E79) added as a displayed measurement with small / moderate / large grades; not used in any decision. The sentence 'up to about 50 mL of pericardial fluid is normal' was removed after the clinician reviewer's reply.",
+    "Wording only (2026-11-21): emphysema 'cannot tell' with a low measured value now says the value is below the tool's limit and that mild emphysema cannot be ruled out with this measure (grey_text, grey_label). Reason: '0 % of lung' next to 'cannot tell' read as a contradiction. No answer changes. The clinician reviewer graded emphysema absent at 0 % (valid_301_a_2) and present, minimal, at 0.01 % (valid_541_a_2)."
+  ],
+  "location_reporting": {
+    "version": "location_rule_v1_provisional",
+    "status": "PROVISIONAL reporting rule. Fixed on 2026-11-22 BEFORE any per-lobe distribution had been computed or looked at; not fitted to any case and not validated against clinician lobe grades. It decides only which lobe names appear in a sentence. It changes no measurement and no present / absent / cannot tell decision. Do not tune it on fresh evaluation cases: any change needs a new version and a new set of unseen cases.",
+    "regions": {
+      "ground_glass": {
+        "row": "E83",
+        "name": "ground-glass-range region"
+      },
+      "consolidation": {
+        "row": "E89",
+        "name": "consolidation-range region (dense lung)"
+      },
+      "atelectasis": {
+        "row": "E91",
+        "name": "dense lung next to pleural fluid"
+      }
+    },
+    "region_wording": "HU-selected region, not a confirmed finding",
+    "show_for_status": [
+      "present",
+      "cannot tell"
+    ],
+    "name_lobe_if_pct_of_region_at_least": 10.0,
+    "naming_rule": "A lobe is named when it holds at least 10% of the selected region (denominator: all voxels of the selected region). Named lobes are listed from the largest share down. A lobe that merely contains some selected voxels is not named. The complete distribution stays in evidence rows E83 / E89 / E91 and in the measurement panel.",
+    "uncertain_lobe_assignment": {
+      "near_fissure_pct_of_region_at_least": 50.0,
+      "outside_lobes_pct_of_region_at_least": 10.0,
+      "poor_inflation": true,
+      "pleural_effusion_present": true,
+      "note": "The location is flagged 'lobe assignment uncertain' when at least half of the region lies within near_fissure_mm of a predicted fissure, when at least 10% of it lies in no lobe outline, when the lungs are poorly inflated (E95, E96), or when the checklist marks pleural effusion present (lobe outlines are less reliable in compressed lung). These limits were fixed in advance, not fitted."
+    },
+    "not_done": "No anatomical segments: TotalSegmentator 2.18 outlines lobes only. Geometric thirds of lung height stay in the measurement panel as 'upper / middle / lower third' and are never called segments. No extent words (mild / moderate / extensive)."
+  },
+  "changes_from_v3_3": [
+    "No decision change: every cut-off, gate and decision rule is copied unchanged from checklist_v3_3.",
+    "New evidence rows E83, E89, E91: full per-lobe distribution of the ground-glass-range region, the consolidation-range region and dense lung next to pleural fluid (mL, % of that lobe, % of the selected region, share near a fissure).",
+    "Location statements are generated by location_rule_v1_provisional (see location_reporting) and name the lobes first. The selected region is called an 'HU-selected region'; for a 'cannot tell' answer it is a candidate region, 'not a confirmed finding'. The old location string (side, zone, 'most in X (n%)') is still computed and stored unchanged in the 'location' field.",
+    "Wording: every percentage in a generated sentence names its denominator ('% of total lung' in the ground-glass and emphysema sentences).",
+    "Reason for the update: reviewer feedback (2026-11-22) that radiologists describe these findings and that lobe location matters as much as extent. This is a display preference, not evidence for or against any threshold."
+  ],
+  "classifier_can_establish_absence": false,
+  "classifier_policy": {
+    "version": "classifier_policy_v2_no_absence",
+    "rule": "The zero-shot classifier (COLIPRI, uncalibrated, not validated on this project's data) is shown as evidence only. Its score can never (a) make a condition absent, (b) make a condition present, (c) overrule or suppress a measurement or another finding, or (d) decide whether a measuring tool runs. Without a decisive measurement the answer is 'cannot tell'.",
+    "what_was_true_before": "Up to v3_4 a score <= 0.30 gave 'absent', displayed as 'not suggested', for every condition without a decisive measurement unless that condition had allow_classifier_absent = false (emphysema, pericardial effusion).",
+    "audit_of_other_uses": "Checked 2026-11-22 in src/lung_ct/agent: the classifier is read in one decision branch only (checklist.py, 'classifier low -> absent'). Elsewhere it only adds review flags. Measurements (conditions.py, evidence.py) never read classifier scores, so no specialist was being blocked by it.",
+    "reason": "Four of the five reviewer-positive findings that the checklist had called absent on the four graded development cases came from this branch (hiatal hernia, pleural effusion, medical material, atelectasis).",
+    "cost": "Every 'not suggested' answer becomes 'cannot tell', including those the reviewer agreed with. See the replay in runs/D1_dev_audit_*."
+  },
+  "changes_from_v3_4": [
+    "classifier_can_establish_absence = false (classifier_policy_v2_no_absence): no condition can be answered 'absent / not suggested' from a low classifier score. Measurements, cut-offs, gates, location rule and wording are unchanged.",
+    "Development evidence only (4 open-page cases). Not frozen. Does not improve detection: it replaces unsupported negatives by 'cannot tell'.",
+    "E79 wording for NEW runs: named 'largest inscribed sphere diameter' of the outline, without the small / moderate / large grade text (the number is not a caliper measurement and is not validated). The value and its calculation are unchanged; existing evidence is not rewritten.",
+    "Wording only: statements about inspiration replaced by what is measured ('low segmented lung volume or high median lung density; inspiration was not assessed independently'). The gate, its limits and every answer are unchanged."
+  ],
+  "neutral_wording": true,
+  "neutral_wording_note": "Text only. The checklist no longer says 'lungs poorly inflated': the gate uses the SEGMENTED lung volume (E95) and the median density inside the lung outline (E96), and the tool has no independent assessment of inspiratory adequacy. Low volume or high density can come from shallow inspiration, disease, body size or an incomplete lung outline. Limits and gate behaviour are unchanged. See lung_ct.agent.wording.",
+  "adoption": {
+    "decided": "2026-11-23",
+    "by": "project lead",
+    "scope": "classifier_policy_v2_no_absence becomes the default for new runs and pages",
+    "comparison_config": "checklist_v3_4",
+    "classifier_role": "supporting evidence only; no diagnostic override"
+  }
+}
