@@ -56,6 +56,10 @@ def main() -> int:
     auth = {f["file"]: f["sha256"] for f in json.loads((ROOT / "runs/grades_received/AUTHENTICATED_EXPORTS.json").read_text(encoding="utf-8"))["files"]}
     pages = []
     for case, run, grades in CASES:
+        found = sorted((ROOT / "runs" / "grades_received").glob(grades))   # '*' stands for the reader's name in the export's file name
+        if len(found) != 1:
+            raise SystemExit(f"{grades}: {len(found)} files match in runs/grades_received, need exactly one")
+        grades = found[0].name
         gp = ROOT / "runs" / "grades_received" / grades
         if auth.get(grades) != sha(gp):
             raise SystemExit(f"{grades}: not an authenticated export, or changed")

@@ -197,6 +197,14 @@ def main() -> int:
         ap.error("--prefill-earlier-grades needs --earlier-grades-csv")
     if args.reference_columns and not args.policy_pack:
         ap.error("--reference-columns needs --policy-pack")
+    for _k in ("grades_csv", "earlier_grades_csv"):          # a '*' in the file name stands for the reader's name: exactly one file must match
+        _p = getattr(args, _k)
+        if _p is not None and "*" in _p.name:
+            _d = _p.parent if _p.is_absolute() else ROOT / _p.parent
+            _m = sorted(_d.glob(_p.name))
+            if len(_m) != 1:
+                ap.error(f"--{_k.replace('_', '-')} {_p}: {len(_m)} files match, need exactly one")
+            setattr(args, _k, _m[0])
     V3 = args.viewer == "v3"
     V4 = args.viewer == "v4"
     V2 = args.viewer in ("v2", "v3", "v4")    # v3 and v4 share the v2 layout and grading form

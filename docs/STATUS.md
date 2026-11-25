@@ -619,3 +619,15 @@ reserved (not downloaded, scored or viewed) for a later evaluation. No calibrati
 
 **Blocked / needs decision**: sample size, readers, form fields (the clinician reviewer). Nothing committed.
 
+
+## Repository housekeeping before first push of this branch (2026-11-24)
+
+- **Names replaced by roles.** People are referred to by role ("the clinician reviewer", "the project lead") in code, configs and docs,
+  because the GitHub repository is public. The five unpushed commits of this branch were rewritten for this; nothing already on GitHub changed.
+- **No rule changed.** In 13 checklist configs (v1 to v3_10) only note / status / changelog text changed; every number and rule is identical
+  (checked field by field). Their SHA-256 values are therefore different from the values recorded in earlier run folders.
+  The run folders are unchanged and keep the hashes of the files as they were when the runs were made.
+- **Grade files are looked up by case and date.** The reader's name is part of the export's file name, so launch files and
+  `scripts/build_policy_pack.py` now use `*` in its place; exactly one file must match, otherwise the build stops.
+- `docs/images/agent_pipeline_explained.png` was re-rendered from its SVG (fonts differ slightly from the earlier copy).
+- Not in Git: the onboarding page under `Claude outputs/` (author byline), data, weights, runs, environments.

@@ -5,7 +5,7 @@ PC can pick up without re-reading the chat. Read this, then `docs/PROJECT_PLAN.m
 the top is the most up-to-date history).
 
 ## Who and what
-- Grounded lung CT agent for a university research group; clinician reviewer the clinician reviewer. Research use only.
+- Grounded lung CT agent for a university research group; one clinician reviewer. Research use only.
 - The user prefers plain explanations (about 11th-grade level) with concrete examples, specifics kept.
 - GPU: one RTX 3090 (24 GB), Windows. Each GPU model has its own environment under `environments/`
   (`segmentation`, `vlm` = MedGemma, `hulumed`, `colipri`); core code runs in `.venv`.
