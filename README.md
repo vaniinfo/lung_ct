@@ -72,9 +72,19 @@ All steps run locally; how to run them is in [docs/SETUP_AND_RUNNING.md](docs/SE
 
 How lung_ct compares with published CT agents and grounded CT report models. Full notes, figures and sources: [docs/RELATED_WORK.md](docs/RELATED_WORK.md).
 
-![Comparison of lung_ct with related systems](docs/images/related_work_comparison.png)
+| System | Scans, date | Measures from masks | Fixed checklist | Can say "can't tell" | Image-quality checks | Cites evidence per claim | Small, local | Doctor review page |
+|---|---|---|---|---|---|---|---|---|
+| **lung_ct (ours)** | CT, 2026 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| RadAgent | CT, Apr 2026 | 🟡 masks only | ✅ | — | — | 🟡 trace | — | — |
+| MedScribe | CT, May 2026 | ✅ | ✅ | — | — | 🟡 retrieval | ✅ | — |
+| 3DMedAgent | CT, ICML 2026 | 🟡 size, HU | — | — | — | 🟡 memory | 🟡 30B option | — |
+| NV-Reason-CT | CT, Sep 2026 | — | ✅ | 🟡 refusals | 🟡 bad input | — | ✅ | — |
+| MedRegion-CT, Reg2RG | CT, 2025 | 🟡 volumes | — | — | — | 🟡 per region | 🟡 7B | — |
+| EXACT | CT, Apr 2026 | 🟡 organ maps | ✅ | — | — | 🟡 heatmaps | — | — |
+| CXRAgent, MedRAX | X-ray only | — | — | — | — | 🟡 support / refute | 🟡 MedRAX | — |
 
-Green box = has it; orange label = partly; empty box = not described in the paper (not the same as "does not have it").
+✅ has it · 🟡 partly (what is there is named) · — not described in the paper (not the same as "does not have it")
+
 
 ### The two closest
 

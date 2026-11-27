@@ -7,20 +7,18 @@ Related files: [PAPER_NOVELTY.md](PAPER_NOVELTY.md) (candidate contributions and
 
 ## 1. Comparison at a glance
 
-![Comparison of lung_ct with related systems](images/related_work_comparison.png)
-
 | System | Modality, date | Measures from masks | Fixed checklist | Can say "can't tell" | Image-quality checks | Cites evidence per claim | Small, local | Doctor review page |
 |---|---|---|---|---|---|---|---|---|
-| **Ours (lung_ct)** | CT, 2026 | yes | yes | yes | yes | yes | yes | yes |
-| RadAgent | CT, Apr 2026 | partly (masks only) | yes | - | - | partly (trace) | - | - |
-| MedScribe | CT, May 2026 | yes | yes | - | - | partly (retrieval) | yes | - |
-| 3DMedAgent | CT, ICML 2026 | partly (size, HU) | - | - | - | partly (memory) | partly (30B option) | - |
-| NV-Reason-CT | CT, Sep 2026 | - | yes | partly (refusals) | partly (bad input) | - | yes | - |
-| MedRegion-CT, Reg2RG | CT, 2025 | partly (volumes) | - | - | - | partly (per region) | partly (7B) | - |
-| EXACT | CT, Apr 2026 | partly (organ maps) | yes | - | - | partly (heatmaps) | - | - |
-| CXRAgent, MedRAX | X-ray only | - | - | - | - | partly (support / refute) | partly (MedRAX) | - |
+| **Ours (lung_ct)** | CT, 2026 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| RadAgent | CT, Apr 2026 | 🟡 masks only | ✅ | — | — | 🟡 trace | — | — |
+| MedScribe | CT, May 2026 | ✅ | ✅ | — | — | 🟡 retrieval | ✅ | — |
+| 3DMedAgent | CT, ICML 2026 | 🟡 size, HU | — | — | — | 🟡 memory | 🟡 30B option | — |
+| NV-Reason-CT | CT, Sep 2026 | — | ✅ | 🟡 refusals | 🟡 bad input | — | ✅ | — |
+| MedRegion-CT, Reg2RG | CT, 2025 | 🟡 volumes | — | — | — | 🟡 per region | 🟡 7B | — |
+| EXACT | CT, Apr 2026 | 🟡 organ maps | ✅ | — | — | 🟡 heatmaps | — | — |
+| CXRAgent, MedRAX | X-ray only | — | — | — | — | 🟡 support / refute | 🟡 MedRAX | — |
 
-"-" means **not described in the paper**, not "proved absent". The marks are our reading of each paper; they need a check against the
+✅ has it · 🟡 partly (what is there is named) · — **not described in the paper**, not "proved absent". The marks are our reading of each paper; they need a check against the
 full text before any of them goes into a publication (see section 5).
 
 What the columns mean for us:
