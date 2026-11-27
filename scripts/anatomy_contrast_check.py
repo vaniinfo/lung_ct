@@ -45,9 +45,11 @@ def centroid_x(mask: np.ndarray, affine: np.ndarray) -> float | None:
     return None if c is None else float(c[0])
 
 
-def check_case(cid: str, ct_file: str) -> dict:
-    ct = nib.load(str(ROOT / ct_file.replace("\\", "/")))
-    seg = ROOT / "data" / "derived" / cid / "segmentation" / "total"
+def check_case(cid: str, ct_file: str, seg_root: Path | None = None) -> dict:
+    """seg_root: folder with <scan>/total/<organ>.nii.gz for scans stored outside the repository (default: data/derived/<scan>/segmentation/total)."""
+    ct_path = Path(ct_file.replace("\\", "/"))
+    ct = nib.load(str(ct_path if ct_path.is_absolute() else ROOT / ct_path))
+    seg = (Path(seg_root) / cid / "total") if seg_root else ROOT / "data" / "derived" / cid / "segmentation" / "total"
 
     def load(name):
         p = seg / f"{name}.nii.gz"
@@ -120,6 +122,9 @@ def check_case(cid: str, ct_file: str) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--qc-run", required=True)
+    ap.add_argument("--seg-root", default=None, help="organ masks of scans stored outside the repository: <seg-root>/<scan>/total/")
+    ap.add_argument("--write-scan-list", default=None, metavar="FILE",
+                    help="also write {scans: {scan: volume path}, left_out: [...]} with the scans that are HU-valid and verified")
     args = ap.parse_args()
     src = json.loads((ROOT / args.qc_run / "run_manifest.json").read_text(encoding="utf-8"))
     run = ROOT / "runs" / f"P1_qc_verified_{Path(args.qc_run).name}_{datetime.now().strftime('%H%M%S')}"
@@ -131,7 +136,7 @@ def main() -> int:
             cases.append(c)
             continue
         try:
-            res = check_case(c["case_id"], c["ct"]["file"])
+            res = check_case(c["case_id"], c["ct"]["file"], args.seg_root)
             c.update(res)
             if not res["laterality"].get("verified"):
                 c["status"] = "failed"
@@ -153,6 +158,13 @@ def main() -> int:
         {"run_id": run.name, "source_qc_run": args.qc_run,
          "provenance": {**src.get("provenance", {}), "verified_utc": datetime.now(timezone.utc).isoformat()},
          "cases": cases}, indent=2), encoding="utf-8")
+    if args.write_scan_list:
+        good = {c["case_id"]: c["ct"]["file"] for c in cases
+                if c.get("status") != "failed" and c.get("ct", {}).get("hu_valid") and c.get("laterality", {}).get("verified")}
+        Path(args.write_scan_list).write_text(json.dumps(
+            {"qc_verified_run": run.name, "cases_file": (src["data_root"].rstrip("/") + "/cases.json") if src.get("data_root") else None, "scans": good,
+             "left_out": [{"scan": c["case_id"], "reason": "; ".join(c.get("issues", [])) or "not HU-valid"} for c in cases if c["case_id"] not in good]},
+            indent=1), encoding="utf-8")
     print(f"done: {len(cases) - bad} verified, {bad} failed -> {run}")
     return 1 if bad else 0
 

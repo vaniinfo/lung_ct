@@ -35,6 +35,7 @@ import base64
 import gzip
 import html
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -53,6 +54,9 @@ import viewer_grading_v2 as gv2  # noqa: E402
 import viewer_v2 as v2  # noqa: E402
 import viewer_v3 as v3  # noqa: E402
 import viewer_v4 as v4  # noqa: E402
+import viewer_v5 as v5  # noqa: E402
+import viewer_v6 as v6  # noqa: E402
+import viewer_v7 as v7  # noqa: E402
 from lung_ct.agent.checklist import assessment_category, load_checklist_config, rule_based_checklist_report  # noqa: E402
 from lung_ct.agent.conditions import image_noise, measure_conditions  # noqa: E402
 from lung_ct.agent.evidence import LOBES  # noqa: E402
@@ -143,9 +147,13 @@ def policy_pack_page(page: str, payload_html: str, chk: dict, ev: dict, pack: st
     assert head.count(tip) == 1
     bar = (f'<div class="policybar"><b>Answer policy shown on this page: {E(chk["config_version"])}</b> &middot; pack {E(pack)} &middot; '
            'development page, open (the tool&rsquo;s answers are visible; not blinded, not an evaluation).<br>'
-           'In this policy: a classifier score is supporting evidence only; an empty or small predicted outline never means &ldquo;absent&rdquo;; '
-           'a positive answer that rests only on a predicted outline is shown as &ldquo;suggested by segmentation&rdquo;; dense lung is listed as '
-           'tagged candidates, not as findings. Limits are provisional reporting limits, not validated diagnostic boundaries. '
+           + (('In this policy: &ldquo;present&rdquo; comes from a measurement, or, for pleural effusion, aortic and coronary calcification, from two sources that agree: '
+           'AI reader NV-Reason-CT says present and the classifier is above its cut-off (or, for pleural effusion, the segmented fluid is at least 20 mL). '
+           'A predicted outline alone gives &ldquo;cannot tell&rdquo;, with what it outlined listed; an empty or small outline never means &ldquo;absent&rdquo;; '
+           'a classifier score alone never decides; dense lung is listed as tagged candidates. Limits and cut-offs are provisional, fitted on development scans, not validated. ') if chk.get("config_version", "") >= "checklist_v3_12" else
+              ('In this policy: a classifier score is supporting evidence only; an empty or small predicted outline never means &ldquo;absent&rdquo;; '
+               'a positive answer that rests only on a predicted outline is shown as &ldquo;suggested by segmentation&rdquo;; dense lung is listed as '
+               'tagged candidates, not as findings. Limits are provisional reporting limits, not validated diagnostic boundaries. ')) +
            'Earlier packs (M1 to M4) show earlier policies and are kept unchanged.</div>')
     head = head.replace(tip, bar + tip, 1)
     if earlier:
@@ -156,6 +164,54 @@ def policy_pack_page(page: str, payload_html: str, chk: dict, ev: dict, pack: st
     return head + tail
 
 
+READER_CSS = """
+.aird{font-size:12.5px;color:#3d4a5c;margin-top:5px;padding-top:4px;border-top:1px dashed #d0d7de}
+.aishown{color:#6e7781}
+.aird[title],.st[title]{cursor:help}
+.aird.aiused{color:#1a4b8c;border-top-color:#9db9ee}.aird.aiused .aishown{color:#1a4b8c;font-weight:600}
+.aireport{white-space:pre-wrap;font:inherit;margin:8px 0 0;background:#f6f8fa;border:1px solid #d8dee4;border-radius:8px;padding:10px 12px}
+"""
+
+
+def reader_card(reader: dict) -> str:
+    """Closed card with the AI reader's own report text, verbatim, and what the reader is. Display only."""
+    cut = ", ".join(f"{v:g} mm {k.replace('_', ' ')}" for k, v in reader["outside_mm"].items())
+    return (f'<div class="card agentonly" id="aireader"><details><summary><b>AI reader report ({E(reader["name"])})</b> '
+            f'<span class="muted">&middot; shown only, not counted &middot; click to open or close</span></summary>'
+            f'<p class="muted">{E(reader["name"])} is a research model. It read this scan as one 3D block at 2 mm resolution'
+            + (f'; part of the scan lay outside its field ({E(cut)})' if cut else '')
+            + '. It was trained on reports from the same hospital as this scan, so its wording resembles those reports. '
+              'It can describe findings that are not in the image, and it was not offered &ldquo;cannot tell&rdquo;. '
+              + (f'On this page its &ldquo;present&rdquo; is used as the tool&rsquo;s answer for: {E(", ".join(reader["used_for"]))} (policy decision, not validated). '
+                 'For every other condition it is shown only. ' if reader.get("used_for") else 'Its answers do not change any answer of the tool on this page. ')
+            + 'The text below is the model&rsquo;s own, unedited.</p>'
+            f'<pre class="aireport">{E(reader["report"]) or "no report text"}</pre></details></div>')
+
+
+def slab_source_info(case_id: str, gt: dict | None) -> dict:
+    """What is known about slice thickness and other reconstructions, for the Details panel of viewer v6. Spacing comes from the affine."""
+    info = {"reported_thickness_mm": v6.reported_thickness_mm((gt or {}).get("technique")),
+            "thickness_source": "radiology report text (technique sentence)" if gt else None}
+    md = sorted((ROOT / "data" / "raw" / "ct_rate" / "hf_cache").glob("**/metadata/validation_metadata.csv"))
+    stem = case_id.rsplit("_", 1)[0] + "_"
+    if md:
+        import csv as _csv
+        with open(md[0], newline="", encoding="utf-8") as fh:
+            sib = {r["VolumeName"].split(".")[0]: float(r["ZSpacing"]) for r in _csv.DictReader(fh)
+                   if r["VolumeName"].startswith(stem) and r["VolumeName"].split(".")[0] != case_id and r.get("ZSpacing")}
+        info["other_reconstructions_z_spacing_mm"] = sib
+        match = [k for k, z in sib.items() if abs(z - v6.AXIAL_MM) < 0.05]
+        others = ", ".join(f"{z:g} mm apart" for z in sorted(set(sib.values())))
+        info["reconstruction_note"] = (
+            (f"The data set holds a reconstruction with slices 2.5 mm apart ({', '.join(match)}); it is not on this page, which shows a calculated view."
+             if match else
+             "No 2.5 mm reconstruction of this scan exists in the data set" + (f" (the other one has slices {others})" if sib else "")
+             + ", so the 2.5 mm view is calculated from these slices."))
+    else:
+        info["reconstruction_note"] = "Whether a 2.5 mm reconstruction exists was not checked; the 2.5 mm view is calculated from these slices."
+    return info
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--run", required=True, type=Path)
@@ -164,9 +220,12 @@ def main() -> int:
     ap.add_argument("--rule-based", action="store_true", help="report built from the checklist")
     ap.add_argument("--out", required=True, type=Path)
     ap.add_argument("--grades-csv", type=Path, default=None, help="grades CSV a reviewer already sent for this case; shown filled in")
-    ap.add_argument("--viewer", choices=["v1", "v2", "v3", "v4"], default="v1",
+    ap.add_argument("--viewer", choices=["v1", "v2", "v3", "v4", "v5", "v6", "v7"], default="v1",
                     help="v2 = location-first page with grading form v2; v3 = v2 with the lazy, lossless loader (WebGL); "
-                         "v4 = v2 with the 2D canvas viewer (no WebGL)")
+                         "v4 = v2 with the 2D canvas viewer (no WebGL); v5 = v4 plus an optional axial sliding-slab MIP mode "
+                         "(scripts/viewer_v5.py); v6 = v4 opening on a derived 2.5 mm axial mean slab, with a 10 mm MIP and native slices under Details "
+                         "(scripts/viewer_v6.py); v7 = v6 plus a bar with the outlines of TotalSegmentator and, with --second-seg, of a second "
+                         "segmentation model (scripts/viewer_v7.py); earlier pages are unchanged")
     ap.add_argument("--blinded", action="store_true", help="v2 / v3: staged page, tool output hidden until step 1 is locked")
     ap.add_argument("--corrected-wording", action="store_true",
                     help="v4 only: corrected review copy. Displayed text no longer asserts inspiration ('poorly inflated', 'shallow breath') and no longer "
@@ -186,8 +245,18 @@ def main() -> int:
                          "display only; evidence.json is not rewritten")
     ap.add_argument("--earlier-grades-csv", type=Path, default=None,
                     help="with --policy-pack: grades the reviewer sent earlier for this case, shown read-only with the policy they were made on")
+    ap.add_argument("--reader-run", default=None, metavar="NAME=RUNDIR",
+                    help="with --policy-pack: show ONE AI reader's answers (run laid out like scripts/run_nvreason.py: <run>/<case>/vlm_parsed.json and "
+                         "report.txt) under each tool answer and its report in a closed card. Display only: checklist files and answers are not changed")
+    ap.add_argument("--second-seg", type=Path, default=None, metavar="RUNDIR",
+                    help="with --viewer v7: run folder of scripts/run_nvsegment.py holding this case. Its outlines are shown in the "
+                         "segmentation bar for comparison. Display only: no answer or measurement uses them")
     args = ap.parse_args()
-    if (args.policy_pack or args.earlier_grades_csv) and args.viewer != "v4":
+    if args.second_seg and args.viewer != "v7":
+        ap.error("--second-seg needs --viewer v7")
+    if args.reader_run and not args.policy_pack:
+        ap.error("--reader-run needs --policy-pack")
+    if (args.policy_pack or args.earlier_grades_csv) and args.viewer not in ("v4", "v5", "v6", "v7"):
         ap.error("--policy-pack / --earlier-grades-csv need --viewer v4")
     if args.policy_pack and (args.grades_csv or args.blinded):
         ap.error("--policy-pack cannot be combined with --grades-csv or --blinded")
@@ -206,9 +275,10 @@ def main() -> int:
                 ap.error(f"--{_k.replace('_', '-')} {_p}: {len(_m)} files match, need exactly one")
             setattr(args, _k, _m[0])
     V3 = args.viewer == "v3"
-    V4 = args.viewer == "v4"
-    V2 = args.viewer in ("v2", "v3", "v4")    # v3 and v4 share the v2 layout and grading form
-    VIEWER_BUILD = v4.VIEWER_BUILD if V4 else v3.VIEWER_BUILD if V3 else v2.VIEWER_BUILD
+    V4 = args.viewer in ("v4", "v5", "v6", "v7")    # v5 = the v4 canvas page plus the MIP mode; v6 = plus the 2.5 mm mean slab; same build path
+    vv = {"v5": v5, "v6": v6, "v7": v7}.get(args.viewer, v4)    # page script, html and css of the canvas viewer
+    V2 = args.viewer in ("v2", "v3", "v4", "v5", "v6", "v7")    # v3 to v6 share the v2 layout and grading form
+    VIEWER_BUILD = vv.VIEWER_BUILD if V4 else v3.VIEWER_BUILD if V3 else v2.VIEWER_BUILD
     if args.corrected_wording and not V4:
         ap.error("--corrected-wording needs --viewer v4")
     if args.blinded and not V2:
@@ -296,6 +366,45 @@ def main() -> int:
             vols[key] = nii_b64(m.astype(np.uint8), aff)
         targets[key] = target_mm(m, aff)
         ov.append({"key": key, "label": label, "cmap": cmap, "swatch": sw, "on": on})
+    seg_meta = None
+    if args.viewer == "v7":            # display only: label maps of the two segmentation models, on the same cropped canonical grid as the scan
+        def can8(a):
+            return v4.to_canonical(np.ascontiguousarray(np.asarray(a, np.uint8)[sl]), ornt)
+        nvcfg, seg_info = json.loads((ROOT / "configs" / "nvsegment_ct_v1.json").read_text(encoding="utf-8")), {}
+        ts_masks = {x: load(rel) for rel, x in (("total/lung_upper_lobe_left", 28), ("total/lung_lower_lobe_left", 29), ("total/lung_upper_lobe_right", 30),
+                                                ("total/lung_middle_lobe_right", 31), ("total/lung_lower_lobe_right", 32), ("total/trachea", 57),
+                                                ("total/heart", 115), ("total/aorta", 6))}
+        ts_lab, seg_info["totalsegmentator_overlapping_voxels"] = v7.ts_label_map({x: m for x, m in ts_masks.items() if m is not None})
+        seg_info["totalsegmentator_missing_files"] = [nvcfg["class_names"][str(x)] for x, m in ts_masks.items() if m is None]
+        maps = {"tsseg": can8(ts_lab)}
+        aw = load("lung_vessels/lung_airways")
+        if aw is not None:
+            maps["tsaw"] = can8(aw.astype(np.uint8) * 132)
+        if args.second_seg:
+            sdir = (args.second_seg if args.second_seg.is_absolute() else ROOT / args.second_seg) / ev["case_id"]
+            sman = json.loads((sdir / "seg_manifest.json").read_text(encoding="utf-8"))
+            if sman["status"] != "ok":
+                raise SystemExit(f"{sdir}: the second segmentation failed for this case ({sman['issues']}); build the page without --second-seg and say so")
+            nvcfg = json.loads((sdir.parent / "run_manifest.json").read_text(encoding="utf-8"))["config"]      # the config that run used
+
+            def same_grid(path):
+                img = nib.load(str(path))
+                if tuple(img.shape[:3]) != tuple(ct.shape[:3]) or np.abs(np.asarray(img.affine, float) - np.asarray(ct.affine, float)).max() > 1e-3:
+                    raise SystemExit(f"{path}: not on the grid of the scan; an outline is never drawn without that check")
+                return np.asanyarray(img.dataobj)
+            maps["nvseg"] = can8(same_grid(sdir / "nvseg_labels.nii.gz"))
+            extra = {x: same_grid(sdir / "extra" / (re.sub(r"[^a-z0-9]+", "_", nvcfg["class_names"][str(x)].lower()).strip("_") + ".nii.gz")) > 0
+                     for x in nvcfg["passes"]["extra"]["labels"]}
+            merged, seg_info["second_model_extra_classes_overlapping_voxels"] = v7.merge_extra(extra, nvcfg["viewer_extra_priority"]["order"])
+            maps["nvsegx"] = can8(merged)
+            seg_info.update(second_model=nvcfg["model"]["model_id"], second_model_revision=nvcfg["model"]["revision"],
+                            second_model_run=str(args.second_seg).replace("\\", "/"), second_model_files_sha256=sman["files_sha256"],
+                            second_model_note="shown for comparison only; no answer, measurement or grade on this page uses it")
+        h, seg_vols, seg_ov, seg_meta = v7.seg_bundle(maps, nvcfg["viewer_groups"] if args.second_seg else [], nvcfg["class_names"], seg_info)
+        payload_html += h
+        vmeta.update(seg_vols)
+        ov += seg_ov
+        del maps
     del hu, hu_thr, masks
 
     # ---- checklist rows ----
@@ -334,7 +443,42 @@ def main() -> int:
         return c1
     conds = {c["key"]: c for c in ck["conditions"]}
     ev_rows = {r["id"]: r for r in ev["rows"]}
+    reader = None
+    if args.reader_run:                # display only: the checklist file and its answers are read, never changed
+        rname, _, rdir = args.reader_run.partition("=")
+        rcase = (ROOT / rdir if not Path(rdir).is_absolute() else Path(rdir)) / ev["case_id"]
+        rres = json.loads((rcase / "vlm_result.json").read_text(encoding="utf-8"))
+        if rres.get("ct_sha256") != qc["ct"]["sha256"]:
+            raise SystemExit(f"{rcase}: the reader ran on a different file than this page shows")
+        reader = {"name": rname, "run": rdir, "conditions": json.loads((rcase / "vlm_parsed.json").read_text(encoding="utf-8"))["conditions"],
+                  "report": (rcase / "report.txt").read_text(encoding="utf-8") if (rcase / "report.txt").exists() else "",
+                  "outside_mm": {k: v for k, v in (rres.get("outside_cube_mm") or {}).items() if v},
+                  "used_for": [c["label"] for c in ck["conditions"] if c.get("reader_decides_present") == rname
+                               or (c.get("two_source_present") or {}).get("reader") == rname]}
+        want_src = (chk.get("reader_sources") or {}).get(rname)
+        if reader["used_for"] and want_src != rdir:
+            raise SystemExit(f"this checklist file was built from reader run {want_src}, the page was asked to show {rdir}")
+
+    def reader_line(key: str) -> str:
+        r = reader and reader["conditions"].get(key)
+        if not r:
+            return ""
+        side = r.get("side")
+        where = {"right": ", right side", "left": ", left side", "both": ", both sides"}.get(side, "")
+        used = bool((chk_by_key.get(key) or {}).get("reader_decided"))
+        tip = reader_tip(reader["name"], r)
+        return (f"<div class='aird agentonly{' aiused' if used else ''}' title=\"{E(tip)}\">AI reader {E(reader['name'])}: <b>{E(r['status'].replace('_', ' '))}</b>{where} "
+                f"<span class='aishown'>({'used for this answer' if used else 'shown only, not counted'})</span></div>")
+
+    def reader_tip(name: str, r: dict) -> str:
+        sc = r.get("score_yes")
+        return (f"{name} score for 'present': {sc:.2f} (0 = no, 1 = yes; uncalibrated, not a probability of disease)" if isinstance(sc, (int, float))
+                else f"{name}: no score stored for this answer")
+    chk_by_key = {i["key"]: i for i in chk["items"]}
     for it in chk["items"]:
+        if reader and it["key"] in reader["conditions"]:      # the stored basis says "no reader answer" because no reader ran when it was written
+            it = {**it, "basis": it["basis"].replace("no reader answer", f"AI reader {reader['name']}: "
+                                                     f"{reader['conditions'][it['key']]['status'].replace('_', ' ')} (shown only, not counted)")}
         lp = None if labels is None or not it.get("ct_rate_label") else it["ct_rate_label"] in labels
         mc, mt = match(it["status"], lp)
         jk = JUMP.get(it["key"])
@@ -346,8 +490,11 @@ def main() -> int:
             cat = assessment_category(it)
             rows_html += (f"<tr class='{'jump' if jump else ''}' data-jump='{jump}'>"
                           f"<td><b>{E(it['label'])}</b>{SHOW_V2 if jump else ''}</td>"
-                          f"<td class='agentonly'><span class='st {cat.replace(' ', '-')}'>{E(it.get('display', it['status']))}</span>"
-                          f"{v2.answer_cell(it, conds.get(it['key'], {}), ev_rows)}</td>"
+                          f"<td class='agentonly'><span class='st {cat.replace(' ', '-')}'"
+                          + (f" title=\"{E('Answer taken from AI reader ' + it['reader_decided']['reader'] + '. ' + reader_tip(it['reader_decided']['reader'], it['reader_decided']))}\""
+                             if it.get("reader_decided") else "")
+                          + f">{E(it.get('display', it['status']))}</span>"
+                          f"{v2.answer_cell(it, conds.get(it['key'], {}), ev_rows)}{reader_line(it['key'])}</td>"
                           f"<td class='whycol agentonly'>{E(stmt)}<div class='why'>{E(it['basis'])}</div></td>"
                           + (ref_cells(it, cat, lp) if args.reference_columns else
                              (f"<td class='whycol agentonly'><span class='m {mc}'>{E(mt)}</span></td>" if labels is not None else "")) + "</tr>")
@@ -532,11 +679,15 @@ const DATA = {json.dumps(data)};
         b = page.index("</script>", page.index("<script>\nconst DATA = ", a)) + len("</script>")
         assert page[b:].strip().startswith("<script>") and page.rstrip().endswith("</body></html>"), "unexpected page layout"
         meta = {"build": VIEWER_BUILD, "case_id": ev["case_id"], "ct": ct_meta, "vols": vmeta, "overlays": ov, "targets": targets}
-        page = (page[:a] + "<script>\n" + v4.EARLY_JS + "\n</script>\n" + grading_js + "\n" + payload_html
-                + v4.viewer_script(meta) + "\n</body></html>")
+        if seg_meta is not None:
+            meta["seg"] = seg_meta
+        if args.viewer in ("v6", "v7"):
+            meta["slab"] = slab_source_info(ev["case_id"], gt)
+        page = (page[:a] + "<script>\n" + vv.EARLY_JS + "\n</script>\n" + grading_js + "\n" + payload_html
+                + vv.viewer_script(meta) + "\n</body></html>")
         va, vb = page.index('<div class="viewer">'), page.index('<div class="side">')
-        page = page[:va] + v4.viewer_html(True) + page[vb:]
-        page = page.replace("</style></head>", v4.CSS + "</style></head>", 1)
+        page = page[:va] + vv.viewer_html(True) + page[vb:]
+        page = page.replace("</style></head>", vv.CSS + "</style></head>", 1)
         page = page.replace("switch them on or off in the bar above the scan", "switch one on or off in the bar above the scan")
         # Order of the cards under the checklist (reviewer request 2026-11-22): radiologist report first, then the
         # measurement panel (collapsible, closed at first), then the tool's report. v1-v3 pages keep their order.
@@ -552,7 +703,7 @@ const DATA = {json.dumps(data)};
         cut_at = rest.index("</span>") + len("</span>")
         meas4 = ('<div class="card agentonly" id="measpanel"><details id="measdet"><summary><b>Measurement panel</b> '
                  + rest[:cut_at] + ' <span class="muted">&middot; click to open or close</span></summary>' + rest[cut_at:] + "</details></div>")
-        page = page.replace(old, card_gt + "\n " + meas4 + "\n " + card_rep)
+        page = page.replace(old, card_gt + "\n " + meas4 + "\n " + card_rep + ("<!--AIREADER-->" if reader else ""))
         jump_old = "document.getElementById('measpanel').scrollIntoView({behavior:'smooth'})"
         assert page.count(jump_old) == 1
         page = page.replace(jump_old, "document.getElementById('measdet').open=true;" + jump_old)
@@ -562,9 +713,13 @@ const DATA = {json.dumps(data)};
             page = neutral_text(page[:cut_]) + page[cut_:]          # html and grading data only; payload and viewer code untouched
             left = banned_hits(page[:cut_])
             assert not left, f"corrected copy still contains: {left}"
-            page = page.replace("checklist_viewer_v4_canvas2d, form grades_v2", "checklist_viewer_v4_canvas2d, form grades_v2, corrected wording copy", 1)
+            page = page.replace(f"{VIEWER_BUILD}, form grades_v2", f"{VIEWER_BUILD}, form grades_v2, corrected wording copy", 1)
         if args.policy_pack:
             page = policy_pack_page(page, payload_html, chk, ev, args.policy_pack, args.earlier_grades_csv, args.prefill_earlier_grades)
+        if reader:                     # inserted last: the model's own words are shown as written, not passed through the wording filter
+            assert page.count("<!--AIREADER-->") == 1
+            page = page.replace("<!--AIREADER-->", "\n " + reader_card(reader))
+            page = page.replace("</style></head>", READER_CSS + "</style></head>", 1)
         code_only = page.replace(payload_html, "")          # the base64 payload can contain any letter sequence by chance
         assert "niivue" not in code_only.lower() and "webgl" not in code_only.lower(), "viewer library code left in a v4 page"
     elif V3:

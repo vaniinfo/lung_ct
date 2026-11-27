@@ -94,7 +94,12 @@ def main() -> int:
         run = ROOT / rn
         ev = json.loads((run / "evidence.json").read_text(encoding="utf-8"))
         cid = ev["case_id"]
-        base = json.loads((ROOT / args.base_rows / "evidence_rows" / f"{cid}.json").read_text(encoding="utf-8"))
+        bp = ROOT / args.base_rows / "evidence_rows" / f"{cid}.json"
+        if not bp.exists():         # the inventory was not computed for this scan (the replay lists why); nodule rows are still added
+            print(f"{cid}: no base rows in {args.base_rows} (inventory not computed there); E97 / E98 only", flush=True)
+            base = {"run": run.name, "rows": []}
+        else:
+            base = json.loads(bp.read_text(encoding="utf-8"))
         if base["run"] != run.name:
             raise SystemExit(f"{cid}: base rows belong to run {base['run']}")
         cands, mask_sha = candidates(cid)
@@ -110,7 +115,7 @@ def main() -> int:
              "note": "equivalent-sphere diameter from the outlined volume: not a measured nodule diameter; lobe = largest overlap or nearest lobe; "
                      "listed largest first"}]
         rec = {"case_id": cid, "run": run.name, "evidence_sha256": sha(run / "evidence.json"), "lung_nodules_mask_sha256": mask_sha,
-               "base_rows": f"{args.base_rows}/evidence_rows/{cid}.json", "rows": rows}
+               "base_rows": f"{args.base_rows}/evidence_rows/{cid}.json" if bp.exists() else f"none: inventory not computed in {args.base_rows}", "rows": rows}
         (out / "evidence_rows" / f"{cid}.json").write_text(json.dumps(rec, indent=1), encoding="utf-8")
         summ.append({"case_id": cid, "candidates": len(cands), "lobes": lobes, "equivalent_diameters_mm": [c["equivalent_diameter_mm"] for c in cands], "mask_sha256": mask_sha})
         print(cid, len(cands), text, flush=True)

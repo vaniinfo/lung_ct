@@ -1,5 +1,7 @@
 # Paper novelty — auditing grounded chest CT model outputs
 
+See also [RELATED_WORK.md](RELATED_WORK.md): comparison of lung_ct with RadAgent, MedScribe and other CT agents.
+
 Living document. This file records candidate contributions, supporting evidence,
 limitations, and the experiments needed to evaluate them.
 

@@ -226,7 +226,17 @@ def build_checklist(ev: dict, readers: dict, ck: dict, hi: float = 0.7, lo: floa
                 it["flags"].append(f"reader(s) {', '.join(dis)} say {opp}")
         else:
             grey = f"measurement in grey zone ({mv:g} {c.get('unit', '')}); " if ms == "grey" else ""
-            if cv == "present" and n_vote >= 1:
+            tr = c.get("reader_decides_present")     # v3_11: one named AI reader decides 'present' for this condition (never 'absent')
+            ra = (rv.get(tr) or {}).get(key) if tr else None
+            sc = ra.get("score_yes") if isinstance(ra, dict) else None
+            sc_txt = f", score {sc:.2f} (0 to 1, uncalibrated)" if isinstance(sc, (int, float)) else ""
+            if tr and reader_votes.get(tr) == "present":
+                it.update(status="present", basis=grey + f"AI reader {tr} answers present{sc_txt}; by project-owner decision this reader's "
+                                                         f"'present' is taken as the answer for this condition (not validated; nothing measured)"
+                                                         + (f"; classifier p={p:.2f}" if p is not None else ""))
+                it["reader_decided"] = {"reader": tr, "answer": "present", "score_yes": sc,
+                                        "side": ra.get("side") if isinstance(ra, dict) else None}
+            elif cv == "present" and n_vote >= 1:
                 it.update(status="present", basis=grey + f"classifier (p={p:.2f}) and {n_present} AI reader(s) agree; not measured")
             elif (cv == "absent" and n_vote == 0 and c.get("allow_classifier_absent", True)
                   and ck.get("classifier_can_establish_absence", True)):   # v3_5: False = a low score never means absent
@@ -242,11 +252,17 @@ def build_checklist(ev: dict, readers: dict, ck: dict, hi: float = 0.7, lo: floa
                     why.append(f"classifier p={p:.2f} (low, but an unvalidated score cannot establish absence)")
                 else:
                     why.append(f"classifier p={p:.2f}")
-                if reader_votes:
+                if tr and tr in reader_votes:    # v3_11: the deciding reader did not say present
+                    why.append(f"AI reader {tr} answers {reader_votes[tr].replace('_', ' ')}{sc_txt}; a reader's 'absent' cannot establish absence")
+                elif tr:
+                    why.append(f"no answer from AI reader {tr}")
+                elif reader_votes:
                     why.append(f"{n_present} of {len(reader_votes)} readers say present" + ("" if vote else " (shown, not counted)"))
                 else:
                     why.append("no reader answer")
                 it.update(status="cannot tell", basis=grey + "; ".join(why))
+        if ck.get("two_source_rule"):        # v3_12
+            _two_source(it, c, ms, mv, p, reader_votes, rv)
         gate = c.get("poor_inflation")  # v3 breath-in check
         if gate and poor_inflation(rows):
             if gate == "no_absent" and it["status"] == "absent":
@@ -269,6 +285,20 @@ def build_checklist(ev: dict, readers: dict, ck: dict, hi: float = 0.7, lo: floa
         items.append(it)
     add_locations(items, rows, ck)
     add_statements(items, ck)
+    for it in items:                   # v3_11: say where a reader-decided answer comes from
+        rd_ = it.get("reader_decided")
+        if it.get("two_source"):       # v3_12
+            ts_ = it["two_source"]
+            it["decision_basis"] = "two sources agree"
+            it["statement"] = (f"{it['label']}: present" + (f", {it['location']}" if it.get("location") else "") + ". Two sources agree: AI reader "
+                               f"{ts_['reader']} answers present, and " + " and ".join(ts_["agreeing"]) + ".")
+        elif it.get("mask_only_positive"):
+            mo = it["mask_only_positive"]
+            it["display"] = "cannot tell"
+            it["statement"] = mo["text"]
+        elif rd_:
+            it["decision_basis"] = f"AI reader {rd_['reader']}"
+            it["statement"] = f"{it['label']}: present, according to AI reader {rd_['reader']} (not measured by the tool)."
     add_threshold_results(items, ck)
     add_dense_candidates(items, rows, ck)
     if ck.get("neutral_wording"):      # v3_5: text only (inspiration not asserted); statuses and numbers are already final here
@@ -278,6 +308,45 @@ def build_checklist(ev: dict, readers: dict, ck: dict, hi: float = 0.7, lo: floa
     counts = {s: sum(i["status"] == s for i in items) for s in STATUSES}
     return {"config_version": ck["config_version"], "scan_type": contrast, "items": items, "counts": counts,
             "rule": ck["decision_rule"]}
+
+
+def _two_source(it: dict, c: dict, ms, mv, p, reader_votes: dict, rv: dict) -> None:
+    """v3_12. (1) A positive answer from a predicted mask alone becomes 'cannot tell'; what the mask showed is kept as evidence.
+    (2) For conditions with 'two_source_present': 'present' when the named AI reader answers present AND a second, independent source agrees
+    (classifier score above the condition's cut-off, or a predicted-mask value at or above a limit). Only where the answer is otherwise
+    'cannot tell': a decisive measurement is never overruled. A reader's 'absent' never gives 'absent'."""
+    mw = c.get("mask_wording") or {}
+    unit = c.get("unit", "")
+    if it["status"] == "present" and ms == "present" and mw.get("headline_present"):
+        it.update(status="cannot tell", basis=f"predicted mask only ({mv:g} {unit}); one source alone does not give 'present' in v3_12")
+        it["mask_only_positive"] = {"value": mv, "unit": unit, "text": mw.get("text_mask_only", "{label}: cannot tell.").format(
+            label=it["label"], value=mv, where=it.get("location") or "side not determined")}
+    rule = c.get("two_source_present")
+    if not rule or it["status"] != "cannot tell":
+        return
+    rd = rule["reader"]
+    if reader_votes.get(rd) != "present":
+        return
+    agreeing = []
+    cut = rule.get("classifier_above")
+    if cut is not None and p is not None and p > cut:
+        agreeing.append(f"the classifier COLIPRI scores {p:.2f}, above this condition's cut-off {cut:g}")
+    lim = rule.get("measured_at_least")
+    if lim is not None and mv is not None and mv >= lim:
+        agreeing.append(f"the segmentation model outlined {mv:g} {unit} (at least {lim:g} {unit})")
+    if not agreeing:
+        it["basis"] += f"; AI reader {rd} answers present, but no second source agrees (v3_12 needs two)"
+        return
+    ra = (rv.get(rd) or {}).get(it["key"])
+    sc = ra.get("score_yes") if isinstance(ra, dict) else None
+    it.update(status="present", basis=f"two sources agree: AI reader {rd} answers present; " + "; ".join(agreeing)
+              + f" (rule {rule['version']}, fitted on development scans, not validated)")
+    it.pop("mask_only_positive", None)
+    it["two_source"] = {"reader": rd, "agreeing": agreeing, "rule": rule["version"]}
+    it["reader_decided"] = {"reader": rd, "answer": "present", "score_yes": sc, "side": ra.get("side") if isinstance(ra, dict) else None,
+                            "with": agreeing}
+    if ms == "present" or (lim is not None and mv is not None and mv >= lim):
+        it["location"] = it.get("location") or None
 
 
 # ---------- wording (v3_2) ----------
@@ -403,7 +472,7 @@ def add_statements(items: list[dict], ck: dict) -> None:
                 it["statement"] = f"{lab}: present. HU-selected {lt}."
             elif lt and it["status"] == "cannot tell":
                 it["statement"] = f"{lab}: cannot tell. Candidate region, not a confirmed finding: HU-selected {lt}."
-            elif it["status"] == "present" and c.get("mask_wording") and it.get("measured_value") is not None:
+            elif it["status"] == "present" and c.get("mask_wording") and it.get("measured_value") is not None and not it.get("two_source"):
                 it["mask_state"] = "volume_at_or_above_present_limit"
                 if c["mask_wording"].get("headline_present"):     # v3_8: a positive answer from a predicted mask alone is a suggestion
                     it["headline"], it["display"] = c["mask_wording"]["headline_present"], c["mask_wording"]["display_present"]

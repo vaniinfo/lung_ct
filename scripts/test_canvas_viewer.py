@@ -556,7 +556,7 @@ def run_page(args, out: Path, R: dict, ok) -> None:
         lines = csv_text.split("\r\n")
         (out / "exported_grades.csv").write_text(csv_text, encoding="utf-8", newline="")
         ok("grades entered for every condition and autosaved", g["graded"].startswith(f"{g['rows']} of {g['rows']}"), g["graded"])
-        ok("CSV export: header + one row per condition + overall row", len(lines) == g["rows"] + 2 and lines[0].startswith("case_id,reviewer,saved_utc,condition_key") and "checklist_viewer_v4_canvas2d" in lines[1], f"{len(lines)} lines")
+        ok("CSV export: header + one row per condition + overall row", len(lines) == g["rows"] + 2 and lines[0].startswith("case_id,reviewer,saved_utc,condition_key") and ("checklist_viewer_v4_canvas2d" in lines[1] or "checklist_viewer_v5_2_canvas2d_mip" in lines[1]), f"{len(lines)} lines")
         if staged:
             ok("staged page: locking step 1 reveals the tool's output", g["stagedNow"] is False)
         R["grading"] = {"rows": g["rows"], "lobes": g["lobes"], "prefilled": g["prefilled"]}

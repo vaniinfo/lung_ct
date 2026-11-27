@@ -29,6 +29,9 @@ def main() -> int:
     ap.add_argument("--config", required=True)
     ap.add_argument("--compare", required=True)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--reader", action="append", default=[], metavar="NAME=RUNDIR",
+                    help="AI reader answers to use instead of the run's readers.json (run laid out like scripts/run_nvreason.py). Repeat the same NAME "
+                         "for several run folders; exactly one must hold the case")
     args = ap.parse_args()
     new, old = load_checklist_config(ROOT / args.config), load_checklist_config(ROOT / args.compare)
     runs = [ROOT / Path(x.strip().replace("\\", "/")).parent for x in (ROOT / args.pages_file).read_text(encoding="utf-8").splitlines() if x.strip()]
@@ -46,10 +49,23 @@ def main() -> int:
         else:
             no_rows.append(cid)
         rd = json.loads((run / "readers.json").read_text(encoding="utf-8")).get("parsed", {})
+        reader_src = {}
+        for name in sorted({x.partition("=")[0] for x in args.reader}):
+            hits = [x.partition("=")[2] for x in args.reader if x.partition("=")[0] == name and (ROOT / x.partition("=")[2] / cid / "vlm_parsed.json").exists()]
+            if len(hits) != 1:
+                raise SystemExit(f"{cid}: {len(hits)} runs of reader {name} hold a valid answer, need exactly one")
+            res = json.loads((ROOT / hits[0] / cid / "vlm_result.json").read_text(encoding="utf-8"))
+            qc_sha = json.loads((run / "qc.json").read_text(encoding="utf-8"))["ct"]["sha256"]
+            if res.get("ct_sha256") != qc_sha:
+                raise SystemExit(f"{cid}: reader {name} ran on a different file than this agent run")
+            rd = {**rd, name: json.loads((ROOT / hits[0] / cid / "vlm_parsed.json").read_text(encoding="utf-8"))}
+            reader_src[name] = hits[0]
         cl = ev.get("classifier") or {}
         a = build_checklist(ev, rd, old, cl.get("high_threshold", 0.7), cl.get("low_threshold", 0.3))
         b = build_checklist(ev, rd, new, cl.get("high_threshold", 0.7), cl.get("low_threshold", 0.3))
         b["rescored_from"] = f"evidence.json (unchanged)" + (f" + rows E92-E94 from {args.rows}/evidence_rows/{cid}.json" if rp.exists() else "; no inventory rows for this run")
+        if reader_src:
+            b["reader_sources"] = reader_src
         (run / f"checklist_{new['config_version']}.json").write_text(json.dumps(b, indent=2), encoding="utf-8")
         ia, ib = {i["key"]: i for i in a["items"]}, {i["key"]: i for i in b["items"]}
         for k in ia:

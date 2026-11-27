@@ -143,13 +143,17 @@ CT scan
 | 0 | Scan check | `batch_qc.py`, HU check, reorientation | DONE |
 | 1 | Measurements + evidence table | TotalSegmentator, airway tree (done); opacity segmenter, HU metrics, reliability tags | IN PROGRESS |
 | 2 | Finding classifier | COLIPRI (native Windows), EXACT (needs WSL2, Mamba) | TODO |
-| 3 | VLM reader | MedGemma 1.5 4B, Hulu-Med-7B (tested), NV-Reason-CT (licence unconfirmed) | IN PROGRESS |
+| 3 | VLM reader | MedGemma 1.5 4B, Hulu-Med-7B (tested), NV-Reason-CT (OpenMDW-1.1, running locally since 2026-11-25) | IN PROGRESS |
 | 4 | Cross-check / validator | rules + text model | TODO |
 | 5 | Report writer | local text model | TODO |
 
 Build order: (1) evidence table from existing measurements + cross-check + report writer, run
 end to end with MedGemma and Hulu-Med; (2) opacity segmenter; (3) classifier (COLIPRI, then
-EXACT); (4) NV-Reason-CT as reader once its licence is confirmed.
+EXACT); (4) NV-Reason-CT as reader (done 2026-11-25, shown only; see docs/STATUS.md).
+
+Second segmentation (2026-11-26): NV-Segment-CT (the VISTA3D network) runs locally next to TotalSegmentator on the four
+graded scans, all supported classes, and is shown in viewer v7 for comparison. It feeds no measurement or answer. Step 1
+still rests on TotalSegmentator; whether any class of the second model should be used is undecided (see docs/STATUS.md).
 
 ### Model test results so far (10 COVID HU cases, reference rules v2, provisional)
 

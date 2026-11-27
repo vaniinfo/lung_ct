@@ -18,7 +18,7 @@ the top is the most up-to-date history).
 - Check every scan: HU valid, left/right from anatomy (heart left, liver right), never from array order.
 - Do not tune thresholds on the cases you report results on (see "test sets" below).
 
-## Pipeline (current: checklist version)
+## Pipeline (as of 2026-11-17; superseded: the current flow is in docs/PIPELINE_FLOW.md)
 0. QC: HU, anatomy-based orientation check, contrast (`scripts/anatomy_contrast_check.py`)
 1. Measurements: TotalSegmentator masks -> evidence rows (`src/lung_ct/agent/evidence.py`,
    `src/lung_ct/agent/conditions.py`): lungs/lobes, dense-lung proxy, LAA-950, image noise (E69),

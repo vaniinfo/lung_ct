@@ -631,3 +631,377 @@ reserved (not downloaded, scored or viewed) for a later evaluation. No calibrati
   `scripts/build_policy_pack.py` now use `*` in its place; exactly one file must match, otherwise the build stops.
 - `docs/images/agent_pipeline_explained.png` was re-rendered from its SVG (fonts differ slightly from the earlier copy).
 - Not in Git: the onboarding page under `Claude outputs/` (author byline), data, weights, runs, environments.
+
+## Viewer v5: optional axial sliding-slab MIP (2026-11-24)
+
+**Why**: the clinician reviewer said MIP helps him see nodules. Display mode only; no model input, prediction, measurement or checklist answer uses it.
+
+**Implemented**: `scripts/viewer_v5.py` (build `checklist_viewer_v5_canvas2d_mip`; viewer v4 code unchanged, v5 adds to it by asserted insertions),
+`--viewer v5` in `scripts/build_viewer_page.py` and `scripts/build_policy_pack.py`, `scripts/test_mip_viewer.py`, `tests/test_viewer_v5.py`,
+`docs/VIEWER_V5_MIP_TEST_REPORT.md`. Pack `runs/M9_policy_v3_10_mip_20261124/` = pack M8 content with the v5 viewer (four graded development cases).
+- Opens as before (single axial image, no outline). `Single slice` / `MIP`; slab 5 / 8 / 10 mm, 10 mm selected; one button back to the centre image.
+- Slab = `max(1, round(requested mm / slice spacing))` images, spacing from the affine; real thickness and image range shown
+  (0.75 mm spacing: 5.25 / 8.25 / 9.75 mm; 1.25 mm: 5.0 / 7.5 / 10.0 mm). Shortened at the scan edges, never shifted or padded.
+- Maxima from CT values before windowing; one slab computed on demand; cache at most 24 MB, emptied on leaving MIP; no WebGL, no full-volume texture.
+- Axial only. Outlines hidden in MIP, with an explanation on the page.
+
+**Tested (technical checks only)**: synthetic 146 of 146 (known maxima, four slice spacings, both scan edges, six stored orientations, windows,
+toggling back, outlines, cache limit); real pages 12 of 12 for each of the four cases in Edge and for valid_301 in Chrome, slabs equal to the
+original NIfTI read with SimpleITK (0 HU difference), 600 scroll steps + 200 window changes per case without error or memory growth;
+pack check 40 of 40; the v4 page test passes on a v5 page (36 of 36); a v4 page rebuilt before and after the change is byte-identical.
+
+**Not tested / not known**: the reviewer's laptop; whether the mode is useful for reading. No clinician usability feedback exists yet.
+
+**Next**: the user decides whether to send pack M9; questions for the reviewer are in the test report, part B.
+
+## Viewer v5.1: MIP layout refinements and thickness convention (2026-11-25)
+
+Display changes only; no model output, measurement or checklist answer changed. Build `checklist_viewer_v5_1_canvas2d_mip`,
+pack `runs/M10_policy_v3_10_mip_20261125/` (pack M9, first layout, kept and not to be sent).
+
+**Implemented**
+- One-line MIP banner; the long explanation is behind `? MIP help` (floating panel, closed at first).
+- Outline buttons not shown in MIP; their bar keeps its height.
+- Page opens at Fit. MIP on / off leaves zoom, pan and the size of the scan area unchanged (bars keep their height in both modes).
+- Window width and level shown next to the presets.
+
+**Thickness convention, checked and documented** (`scripts/viewer_v5.py`, `docs/VIEWER_V5_MIP_TEST_REPORT.md`): stated thickness = images x spacing
+(13 x 0.75 mm = 9.75 mm); first-to-last image centres = (images - 1) x spacing (9 mm). The page shows both. The projection was not changed.
+Spacing (from the affine) is not acquisition slice thickness, which is not in the NIfTI affine nor in the CT-RATE metadata we hold; the page says "spacing".
+
+**Tested (technical checks only)**: synthetic 194 of 194; real pages 16 of 16 for each of the four cases in Edge and for valid_301 in Chrome, on the
+workstation's integrated AMD Radeon adapter (renderer confirmed); 105 real slabs including both scan edges equal to a direct maximum over the original
+NIfTI (0 HU difference); 300 real wheel notches + 600 scroll steps + 200 window changes per case with no error, no memory growth, slab cache inside
+24 MB; pack check 40 of 40; v4 page test on a v5.1 page 36 of 36; unit tests 247 passed.
+
+**Not tested / not known**: the reviewer's laptop; whether the mode is useful for reading. No clinician usability feedback exists yet.
+
+**Next**: the user decides whether to send pack M10. Questions for the reviewer: test report, part B.
+
+## Viewer v5.2: short MIP label, outline bar removed in MIP (2026-11-25)
+
+Display changes only. Build `checklist_viewer_v5_2_canvas2d_mip`, pack `runs/M11_policy_v3_10_mip_20261125/` (the one to show; M9 and M10 kept, not to be sent).
+
+**Implemented**
+- Label `MIP ≈10 mm · 13 slices · Images 183–195 · Centre 189`; spacing, exact coverage and centre distance of the current slab moved to `? MIP help`.
+- Outline bar removed in MIP; "Outlines are not shown in MIP view" is a small notice on the label line. The scan area is taller in MIP.
+- The reader's zoom is kept across that change of height (same screen pixels per image pixel, same image point at the centre) and restored exactly on return; from Fit the image stays at Fit.
+
+**Tested (technical checks only)**: synthetic 194 of 194; real pages 17 of 17 for each of the four cases in Edge and for valid_301 in Chrome on the integrated
+AMD Radeon adapter; 105 real slabs including both scan edges equal to a direct maximum over the original NIfTI (0 HU difference); scrolling and memory as
+before (no error, no growth); pack check 40 of 40; v4 page test on a v5.2 page 36 of 36; unit tests 247 passed.
+
+**Not tested / not known**: the reviewer's laptop; whether the mode is useful for reading. No clinician usability feedback exists yet.
+
+**Next**: the user decides whether to send pack M11.
+
+## NV-Reason-CT added as a third AI reader (shown only) (2026-11-25)
+
+**Why now**: the licence was the open point. Model card and code repository both state OpenMDW-1.1 (use without restriction, no limits on
+outputs, keep the licence text when redistributing). Public download, no token.
+
+**Implemented**
+- `environments/nvreason` (4.4 GB; torch 2.14.1+cu126, transformers 5.6.2 as pinned upstream, monai), `models/nvreason` (10 GB; weights SHA-256
+  checked against the published value). Revision pinned `386b93e`; the two remote code files (874 lines) were read before first use.
+- `configs/nvreason_ct_v1.json`, `scripts/run_nvreason.py`, `setup_nvreason.bat`, `run_nvreason_test.bat`, `scripts/fetch_public_file.py`
+  (parallel, resumable download; one anonymous connection to the hub gave about 0.5 MB/s).
+- The model reads the NIfTI itself as one 3D block (LPS from the affine, 2 mm, 192^3 = 384 mm cube, -1000..1000 HU). Only scans whose left / right
+  was verified from anatomy are eligible. Per case the cube pictures and the millimetres outside the cube are saved.
+- Asked in its documented way: one structured report, then "Is ... present in this CT? Answer only Yes or No." for each of the 18 reader
+  conditions, then a right / left / both question (our wording) after a Yes. The checklist-shaped answer is assembled by our code;
+  the model is never offered "cannot tell".
+- `scripts/score_reader_checklists.py`: readers against CT-RATE report labels (17 labelled conditions).
+- Readers do not vote in checklist_v3_10, so no checklist decision, measurement, threshold or historical page changed. No agent run or pack was rebuilt.
+
+**Tested**
+- Runs on Windows 11 / RTX 3090 (upstream lists Linux only): peak GPU memory 12.5 GB, 2.0-3.1 min per scan (report about 22 s, about 6 s per question).
+  24 of 24 scans gave a valid answer, 0 failed. Unit tests 275 passed (28 new).
+- test20 (20 development scans, `runs/P3_nvreason_20cases_20261125_191112`, scores `runs/E23_reader_label_scores_test20_20261125_201148`):
+
+  | Reader | Found of labelled | Labelled of said present | Extra | Scans with every answer absent |
+  |---|---|---|---|---|
+  | MedGemma | 24 of 55 | 24 of 58 | 34 | 14 |
+  | Hulu-Med | 20 of 53 (6 cannot tell) | 20 of 27 | 7 | 14 |
+  | NV-Reason-CT | 43 of 55 | 43 of 64 | 21 | 5 |
+
+  Lung nodule: NV-Reason-CT 8 of 10 labelled, the other two readers 0 of 10. Labels are report mentions, so an "extra" can be a real finding.
+- Four clinician-graded scans (`runs/P3_nvreason_3cases_20261125_200014`, `runs/P3_nvreason_1cases_20261125_200819`), 72 graded conditions:
+  same answer as the clinician reviewer on 60 (21 present, 39 absent); 9 of 30 present missed; 3 of 42 absent called present.
+  Seven of the nine misses are on valid_832 (including pleural effusion, pericardial effusion and hiatal hernia).
+
+**Limits**
+- Development scans only; 20 and 4 scans; no confidence intervals; nothing here is a validation.
+- The model was trained on CT-RATE training scans from the same hospital and learned that hospital's report wording; the labels it is compared
+  with come from those reports. This favours it over the other two readers. We could not check its training list ourselves.
+- Different question format from the other two readers (yes / no per condition against one JSON checklist), so the comparison is of the readers
+  as we use them, not of the models under one prompt.
+- Left / right answers were not scored (the grades and labels carry no side). 58 side answers: 32 both, 15 left, 11 right.
+- Parts of the body outside the 384 mm cube are not seen: up to 52 mm in-plane and 21 mm head-to-foot on these scans (chest wall and table, not checked per case).
+- ground_glass has no model label of its own; the question wording for it is ours.
+
+**Next (user decides)**: show NV-Reason-CT on the viewer pages as a third reader (`--reader nvreason=<run>` in `agent_run_case.py`);
+run it on a fresh, untouched CT-RATE set before any claim; score its left / right answers against the measured side.
+
+## Viewer v6 (Axial 2.5 mm, MIP 10 mm) and NV-Reason-CT on the four pages: pack M12 (2026-11-25)
+
+**Request (clinician reviewer, via the project lead)**: regular axial view 2.5 mm and axial MIP 10 mm, lung window; remove 5 and 8 mm; simple controls.
+Project lead: show NV-Reason-CT on the four pages instead of MedGemma / Hulu-Med.
+
+**Inspected first**: slice spacing 0.75 mm (301, 832, 988) and 1.25 mm (541) from the files. Slice thickness is not in the NIfTI header or the CT-RATE
+metadata (ZSpacing only); the report text states 1.5 mm for 301, 541, 988 and nothing for 832. No 2.5 mm reconstruction exists (other reconstructions: 1.5 / 1.25 mm apart).
+
+**Implemented**
+- `scripts/viewer_v6.py`, build `checklist_viewer_v6_canvas2d_axial25_mip10`; `build_viewer_page.py --viewer v6`; `build_policy_pack.py --viewer v6`.
+  Opens on "Axial 2.5 mm" (mean slab from HU before windowing, rounded to whole HU), Fit, lung window, no outline. "MIP 10 mm". "Details" holds exact
+  figures and the native thin slices. Outlines on native slices only. Same slab rule as v5 (whole slices from spacing, centred, shortened at edges).
+  0.75 mm: 3 slices = 2.25 mm and 13 slices = 9.75 mm; 1.25 mm: 2 slices = 2.5 mm and 8 slices = 10 mm.
+- `--reader-run` in both builders: NV-Reason-CT's answer under each tool answer ("shown only, not counted") and its report in a closed card.
+  Display only: the stored checklist files still say "no reader answer"; the page shows the reader's answer in that place.
+- Pack `runs/M12_policy_v3_10_axial25_nvreason_20261125` (same settings as M11 otherwise). Not sent.
+- `scripts/test_slab_viewer.py`, `tests/test_viewer_v6.py`, `docs/VIEWER_V6_TEST_REPORT.md`.
+
+**Tested (technical checks only)**: synthetic 182 of 182; real pages 16 of 16 for each of the four cases in Edge and for valid_541 in Chrome on the
+integrated AMD Radeon adapter; 90 real mean / MIP slabs including both scan edges equal a direct calculation over the original NIfTI (0 HU);
+tool answers and embedded scan data identical to M11; M11 unchanged and a rebuilt M11 page byte-identical; unit tests 298 passed.
+
+**Not tested / not known**: the reviewer's laptop; whether 2.25 mm is acceptable as "2.5 mm"; whether the AI reader line helps. No clinician feedback yet.
+MedGemma and Hulu-Med are still called by the older batch files for new case sets; those were not changed.
+
+**Next**: the project lead decides whether to send pack M12.
+
+**Addition (2026-11-25): NV-Reason-CT yes / no score.** `run_nvreason.py` now stores `score_yes` per condition in `questions.json`: the share of "Yes" between
+"Yes" and "No" for the first answer token (0 to 1, uncalibrated, not a probability of disease). Four graded scans re-asked (`runs/P3_nvreason_3cases_20261125_214608`,
+`runs/P3_nvreason_1cases_20261125_215309`): answers identical to the first run. 68 of 72 scores are below 0.05 or above 0.95; 7 of the 9 findings the model
+missed against the clinician reviewer have a score below 0.02, so the score does not flag most misses. Capital "Atelectasis" against lowercase on 24 scans: 0 answers changed
+(`runs/test_logs/nvreason_caps_probe.json`). Pack M12 is unchanged and does not show the score.
+
+## checklist_v3_11: NV-Reason-CT decides "present" for three conditions; pack M13 (2026-11-25)
+
+**Decision (project lead)**: for medical material, hiatal hernia and bronchiectasis the tool should give the AI reader's answer instead of "cannot tell", with the reader's score as a tooltip.
+
+**Implemented**
+- `configs/checklist_v3_11.json` (= v3_10 plus `reader_decides_present: NV-Reason-CT` on those three conditions, block `trusted_reader`, decision rule 2e).
+  Reader "present" -> "present" (basis "AI reader NV-Reason-CT"). Reader "absent" -> unchanged, "cannot tell": a reader's "absent" does not establish absence,
+  because on the four graded scans it answered absent for bronchiectasis (valid_301) and hiatal hernia (valid_832) where the clinician reviewer marked present.
+  No score limit: the reader's own Yes / No is used; the score (0 to 1, uncalibrated) is stored and shown.
+- `lung_ct.agent.checklist.build_checklist` (v3_10 and earlier give identical answers); `rescore_with_inventory_rows.py --reader NAME=RUN`;
+  `run_nvreason.py` stores `score_yes` in the assembled answer; page builder: tooltip with the score on every reader line and on reader-decided answers,
+  reader line reads "used for this answer"; CSV rows carry `agent_decision_basis = AI reader NV-Reason-CT`.
+- Reader runs with scores and reports: `runs/P3_nvreason_3cases_20261125_221636`, `runs/P3_nvreason_1cases_20261125_222432`.
+  Re-score: `runs/E24_rescore_v3_11_20261125`. Pack `runs/M13_policy_v3_11_axial25_nvreason_20261125` (viewer v6). Not sent.
+
+**Result on the four graded scans** (development data): 4 of 80 answers change against v3_10, all from "cannot tell" to "present": valid_301 hiatal hernia (score 0.90)
+and medical material (1.00); valid_832 bronchiectasis (1.00) and medical material (1.00). All four match the clinician reviewer's grade. Still "cannot tell" although the
+reviewer marked present: bronchiectasis on valid_301 (score 0.00) and hiatal hernia on valid_832 (0.00). No other answer changes; embedded scan data identical to M12.
+
+**Tested**: page checks 16 of 16 on all four M13 pages and on an M12 page (Edge, integrated graphics); M12 files and the v3_10 checklist files unchanged; unit tests 311 passed (13 new).
+
+**Limits**: a project decision, not a validation. The supporting numbers are tiny and from development scans (test20 against report labels, hit / miss / extra: medical material
+1 / 0 / 1, hiatal hernia 1 / 0 / 1, bronchiectasis 2 / 1 / 0). The reader was trained on reports from the same hospital. The rule was chosen after seeing these four scans, so they
+cannot be used to judge it. The other development scans were not re-scored. The score is almost always near 0 or 1 and does not flag the reader's misses.
+
+**Next (project lead decides)**: send M13; test the rule on scans not used so far.
+
+## Prompt test template; PT01: COLIPRI prompt wording (2026-11-26)
+
+**Implemented**
+- `docs/PROMPT_TEST_TEMPLATE.md`: reusable plan for testing prompt wording of any model (steps, rule "decide before you look", plan and result forms).
+- First use: `docs/prompt_tests/PT01_colipri_prompts_PLAN.md` (frozen before any score), `configs/colipri_prompt_sets_v1.json`,
+  `scripts/prompt_test_colipri.py` (each scan encoded once; `--reuse` re-analyses stored embeddings), `tests/test_prompt_test.py`.
+
+**Result** (`runs/PT01_colipri_prompts_20261126_073924`, `docs/prompt_tests/PT01_colipri_prompts_RESULT.md`): 85 development scans, 70 patients, 18 CT-RATE labels.
+Macro AUROC: A current short prompts 0.886; B four sentence forms 0.888 (difference +0.002, interval -0.007 to +0.015); C several names 0.886 (0.000, -0.006 to +0.006);
+D report passages 0.869 (-0.017, -0.041 to +0.007; atelectasis 0.87 -> 0.64). No set met the pre-stated rule. **Set A stays; nothing changed.**
+Set A scores equal the stored pipeline scores (largest difference 0.0001).
+
+**Tested**: unit tests 322 passed (11 new).
+
+**Limits**: development scans and report-mention labels, so a choice of method only, not a performance figure; five conditions have fewer than 10 positive scans;
+set D used validation reports of other patients, not training reports.
+
+**Open**: `configs/colipri_ct_v1.json` still quotes "external test AUROC about 0.77 (RAD-ChestCT)", a third-party figure for a fine-tuned variant; the paper's own
+zero-shot figures on RAD-ChestCT are 0.60 to 0.67. Not changed (the note is copied into stored run files).
+
+## Second segmentation: NV-Segment-CT, all supported classes; viewer v7; pack M14 (2026-11-26)
+
+Looked at four NVIDIA models. NV-Reason-CT is already our third reader. NV-Reason-CXR reads chest X-rays only (not our data). NV-Generate-CTMR makes synthetic CT
+(for training, outside scope; parked). NV-Segment-CTMR / NV-Segment-CT segment organs: the CT-only one was chosen (same lung classes, permissive weights licence).
+
+**Implemented**
+- `configs/nvsegment_ct_v1.json`, `scripts/run_nvsegment.py`, `setup_nvsegment.bat`, `run_nvsegment_test.bat`, `environments/nvsegment`, `models/nvsegment` (0.9 GB;
+  nvidia/NV-Segment-CT @ afb5151, weights SHA-256 checked at load). The network is MONAI's `vista3d132`; the repository's Python files are not executed.
+  Preprocessing and inference follow the vendor pipeline step for step. All supported classes: 117 ("segment everything", one label map) + 7 extra classes
+  (class 'lung tumor', pancreatic / hepatic tumour, colon cancer, hepatic vessel, bone lesion, airway; one mask each). Output on the source grid, geometry checked before writing.
+- `scripts/compare_nvsegment_totalseg.py`: agreement with TotalSegmentator (not accuracy).
+- `scripts/viewer_v7.py` (build `checklist_viewer_v7_canvas2d_axial25_mip10_two_segmentations`): v6 plus the bar "Segmentation models" with TotalSegmentator and
+  NV-Segment-CT buttons. `build_viewer_page.py --viewer v7 --second-seg RUN`, `build_policy_pack.py --viewer v7 --second-seg-run RUN`.
+  `scripts/test_seg_viewer.py`, `tests/test_nvsegment.py`, `docs/VIEWER_V7_TEST_REPORT.md`. `test_slab_viewer.py --viewer-build` runs the v6 page checks on a v7 page.
+- Runs: `runs/P2_nvsegment_3cases_20261126_123711` (301, 541, 988), `runs/P2_nvsegment_1cases_20261126_123758` (832); three earlier runs of the same scans with an
+  earlier copy of the config are kept (identical mask files). Comparison `runs/E25_nvsegment_vs_totalseg_20261126_123834`.
+  Pack `runs/M14_policy_v3_11_two_segmentations_20261126` = M13 content (policy checklist_v3_11, NV-Reason-CT lines) on viewer v7. Not sent.
+
+**Result on the four graded scans** (development data; two models compared with each other, no clinician outline)
+- Runs on Windows / RTX 3090: 11 to 26 s per scan, 8 to 14 GB peak. Every scan run twice gave identical files. 104 to 113 of 124 classes received voxels.
+- Dice against TotalSegmentator, lowest / middle / highest: left upper lobe 0.91 / 0.97 / 0.98; left lower 0.89 / 0.95 / 0.98; right upper 0.93 / 0.95 / 0.97;
+  right middle 0.78 / 0.87 / 0.96; right lower 0.86 / 0.97 / 0.98; both lungs 0.92 / 0.96 / 0.98; trachea 0.72 / 0.88 / 0.94; heart 0.77 / 0.96 / 0.97;
+  aorta 0.92 / 0.93 / 0.95; liver 0.95 / 0.98 / 0.98. The lowest values are mostly valid_832 (heart 0.77, right middle lobe 0.79) and valid_301.
+- Airways: Dice 0.40 to 0.77; volume 17 to 25 mL (NV) against 19 to 58 mL (TS). The classes are defined differently, so this does not rank them.
+  Separate pieces TS / NV: 28 / 5, 42 / 22, 60 / 27, 69 / 69.
+- Class 'lung tumor': valid_301 48.5 mL in 29 pieces (16.8 mL inside its own lobes), valid_832 7.8 mL in 23 pieces, 0 on valid_541 and valid_988.
+  Dice with TotalSegmentator's lung_nodules mask 0.23, 0.07, 0, not defined. Other tumour classes also fire in every scan (colon cancer primaries up to 11.4 mL, bone lesion up to 10 mL,
+  hepatic tumor up to 3.1 mL). Classes not expected in a chest scan received voxels in every scan (for example skull 89 mL and vertebra L3 69 mL on valid_832, left femur 12.8 mL on valid_301).
+
+**Tested**: unit tests 335 passed (13 new). Viewer: synthetic 49 of 49; real pages 8 of 8 on all four (every button equals the original mask files pixel for pixel);
+v6 page checks on the v7 pages: 16 of 16 on all four. Pack M13 unchanged.
+
+**Limits**: four development scans; agreement between two models, not accuracy; nothing here was compared with the clinician reviewer's grades or with any outline drawn by a person.
+The tumour classes and the out-of-chest classes show the second model marks things that are not there, so none of its classes should feed an answer without its own check.
+The model card reports no accuracy figures and supports Linux only. Point-click segmentation (the model's interactive mode) was not tried.
+
+**Next (project lead decides)**: send M14 or stay with M13; whether the NV airway mask should be tried in the airway-tree measurement (Phase 5) as a sensitivity check;
+whether to ask the clinician reviewer which lobe outline looks better where the two differ (valid_832, valid_301).
+
+## Both segmentation models against expert lung masks (2026-11-26)
+
+**Implemented**: `scripts/score_segmenters_vs_reference.py` (core env). Reference: the expert left / right lung masks and infection masks of the COVID-19 CT set already on
+disk (Phase 1); no download. NV-Segment-CT run `runs/P2_nvsegment_10cases_20261126_132013` (ten HU-valid scans; the ten display-scaled scans are skipped and listed).
+TotalSegmentator masks are the Phase 2 ones in `data/derived`. Result folder `runs/E26_segmenters_vs_expert_lungs_20261126_132301`.
+
+**Result** (10 scans, 20 lungs; whole lungs only)
+- Dice, lowest / middle / highest: TotalSegmentator 0.975 / 0.982 / 0.987; NV-Segment-CT 0.966 / 0.977 / 0.984.
+  Paired difference (NV minus TS) -0.006, 95 % interval -0.008 to -0.004 (patients resampled). TotalSegmentator higher on 9 lungs, within 0.005 on 11, NV higher on none.
+- Volume error, middle / largest: TotalSegmentator 0.4 % / 1.2 %; NV-Segment-CT 1.2 % / 3.8 %.
+- Share of the reference infected lung that the lung mask covers, lowest / middle: TotalSegmentator 94 % / 99.6 %; NV-Segment-CT 71 % / 96.5 %.
+  NV-Segment-CT leaves out part of the diseased lung on coronacases_002 (71 % and 81 %) and coronacases_007 (73 % and 78 %).
+
+**Tested**: unit tests 336 passed (1 new).
+
+**Limits**: ten scans from one source, COVID-19 pneumonia only; whole lungs, not lobes, airways or any other class; whether this set was in either model's training data
+is not established (it is not in the part of the VISTA3D dataset table that could be read; TotalSegmentator was trained on its own collection). The differences in Dice are small;
+the difference in covering diseased lung is the practically relevant one for this project.
+
+**Decision supported**: TotalSegmentator stays the segmentation the tool uses for the lungs.
+
+**Open (project lead decides)**: a lobe-level check needs new data. The only public expert lobe set found is 50 LUNA16 scans (CC BY-NC-SA; a third-party list says it contains
+errors); the scans must be taken from the LUNA16 archives, which are far larger than the 50 scans. Raw data is at 20 of 20 GB, so this needs a storage exception.
+No public airway set was found that is both free of registration and outside NV-Segment-CT's training data (AeroPath is in it; ATM'22 and AIIB23 need registration).
+
+**Closed (project lead, 2026-11-26)**: the segmentation-model comparison stops here. No lobe or airway data will be downloaded. TotalSegmentator stays the model the tool uses;
+NV-Segment-CT stays display-only in viewer v7. No further runs of this comparison without a new request.
+
+## Prompting experiments 1 to 4: NV-Reason-CT wording (PT02), cut-offs and trust rules (TR01) (2026-11-26)
+
+**Implemented**: `configs/nvreason_prompt_sets_v1.json` (frozen), `scripts/prompt_test_nvreason.py` (nvreason env; asks, never reads a label),
+`scripts/prompt_test_yesno.py` and `scripts/trust_rules.py` (core env; scoring). Plans frozen before any figure was computed and results in `docs/prompt_tests/`
+(PT02_nvreason_prompts_*, TR01_cutoffs_and_trust_rules_*). The scan is now processed once and reused for every question (1.2 s instead of 5.2 s per question);
+on 5 scans, 15 answers were also produced the ordinary way and were identical.
+Runs: `runs/PT02_nvreason_prompts_20261126_134837` (83 scans, 7 ways of asking, 10,541 answers, 0 failed, 0 unreadable), `runs/TR01_trust_rules_20261126_190105`.
+
+**Result** (development scans, reference = CT-RATE report labels)
+- Experiment 1, way of asking: no set met the pre-stated rule; the current wording stays. Macro balanced accuracy: current 0.814, vote of three wordings 0.812,
+  reasoning on 0.814, definition in the question 0.810, report first 0.814, location first 0.828 (interval of the difference -0.019 to +0.052; 87 more "extra" answers,
+  three conditions more than 0.05 worse).
+- Experiment 2, three wordings: same answer on 98.4 % of 1,411 scan-conditions. Disagreement marks 8 of 156 errors; a Yes-score between 0.05 and 0.95 marks 29 of 156.
+  Both meet the pre-stated test for a useful flag, but 127 of 156 errors are given with a score near 0 or 1.
+- Experiment 3, trust rules: of 52 source-condition pairs none may decide "present"; one may decide "absent" (COLIPRI with cut-off, consolidation). No trust table adopted.
+  The three conditions where checklist_v3_11 lets NV-Reason-CT decide "present" do not meet the bar against report labels
+  (medical material 5 of 9 calls labelled, hiatal hernia 4 of 8, bronchiectasis 7 of 10).
+- Experiment 4, COLIPRI cut-offs: fitted per condition with each patient left out; they range from 0.009 to 0.993 and several are unstable. Proposals only.
+
+**Tested**: unit tests 350 passed (14 new, `tests/test_prompt_test_yesno.py`).
+
+**Limits**: development scans; report labels count a correct finding the report did not mention as an error; 10 to 20 positive scans for most conditions, five conditions
+with fewer than 10; the model was trained on reports from the same hospital. MedGemma and Hulu-Med (20 scans) were not judged. The tool's answers are from a 58-scan
+checklist_v3_9 run. Nothing was applied to any checklist, page or pack.
+
+**Open (project lead decides)**: whether checklist_v3_11's three reader-decides conditions should be looked at again (for example by the clinician reviewer on the scans
+where the reader says present and the report does not); whether to show a "less certain" mark from the Yes-score on pages; a confirmation run on untouched scans would
+need a data-budget exception.
+
+## Data budget removed (project lead, 2026-11-26)
+
+The 20 GB new-data and 30 GB model-weight limits of the initial scope no longer apply (D: 6.5 TB free of 7.3 TB; data/raw 20 GB, models 74 GB at the time).
+Still in force: D: only, never C:; download size and source recorded per run; CT-RATE is not mirrored in full; licence and access terms are checked before any download.
+Earlier STATUS entries and the frozen plans that mention the budget are left as written.
+
+## TR02: calibration on 400 new CT-RATE patients - prepared, download waiting for the token (2026-11-26)
+
+**Implemented**: plan frozen before any new scan was downloaded (`docs/prompt_tests/TR02_calibration_400_PLAN.md`); `scripts/ctrate_fetch_calibration.py`
+(label-blind random choice of 400 of the 1,234 validation patients not used so far, seed 20261126; first 200 = fit half, next 200 = confirm half; data in
+`D:/datasets/ct_rate/calib400`); `scripts/segment_orientation_organs.py` (organ masks for the left/right check only); `--seg-root` / `--write-scan-list` in
+`anatomy_contrast_check.py`; `--scan-list` in `prompt_test_nvreason.py`; `--scan-list --scores-only` in `prompt_test_colipri.py`; `scripts/trust_rules_confirm.py`;
+`fetch_ctrate_calibration.bat` (all five steps, unattended after the token).
+
+**Tested**: unit tests 357 passed (7 new, `tests/test_tr02_calibration.py`). Chain test on 3 existing scans (`runs/TR02_chaintest_*`): organ masks, check
+(valid_64_a_3 left out again, as in its earlier QC), NV-Reason-CT answers identical to PT02 (36 of 36), COLIPRI scores identical to PT01 (largest difference 0.000001).
+Selection dry run: 400 patients, none already used; 353 standard-kernel reconstructions, 47 not (kept, recorded).
+
+**Run (2026-11-26 20:04 to 2026-11-27 05:35)**: 400 downloaded (89.6 GB, 0 failed), 400 HU-valid, 395 orientation-verified (5 left out), 198 fit / 197 confirm.
+NV-Reason-CT 0 unreadable, 60 equivalence checks identical; COLIPRI 0 failed. Scoring `runs/TR02_calibration_20261127_053515`; result `docs/prompt_tests/TR02_calibration_400_RESULT.md`.
+
+**Result**: no source may decide "present" for any condition. Confirmed in both halves: COLIPRI "absent" for consolidation; COLIPRI and NV-Reason-CT "absent" for
+coronary artery wall calcification. TR01's cut-offs and its consolidation entry do not hold on the new scans (withdrawn). Several COLIPRI cut-offs lose much on the confirm
+half (septal thickening 0.80 to 0.49, medical material 0.87 to 0.66). For checklist_v3_11's three reader-decides conditions the report agrees with 66 % (medical material),
+59 % (hiatal hernia) and 40 % (bronchiectasis) of NV-Reason-CT's "present" calls.
+
+**Open (project lead decides)**: whether to propose a checklist version with the three "absent" entries; whether checklist_v3_11's reader-decides rule (bronchiectasis in
+particular) should be reviewed by the clinician reviewer; the confirm half is used up.
+
+## Model against report for every condition; review sample for two readers (2026-11-27)
+
+**Implemented**: `scripts/model_vs_report_table.py` (all 18 conditions, both models, on the 395 calibration scans; output
+`runs/TR02_calibration_20261127_053515/model_vs_report_all_conditions.{md,csv}`, descriptive). `scripts/review_sample_model_vs_report.py`: random sample, seed 20261127,
+`runs/RS01_review_sample_20261127` (seed 20261127, `--all-conditions`): 46 scans, every page asks all 18 conditions. Scans were added until each labelled
+condition had at least 3 scans where the model says present and the report is silent (8 for bronchiectasis, hiatal hernia, medical material), 2 where the report
+mentions it and the model does not, and 1 where both say present; result: 118 "model present, report silent" items (3 to 12 per condition).
+`scripts/build_reading_pages.py`: one blinded page per scan (viewer v6 CT display, no outlines; Present / Absent / Cannot tell + optional location per condition;
+autosave per reader; CSV download). No model answer, score, report or sample cell on the pages; reader names given on the command line only.
+Pages: `runs/RS01_review_sample_20261127/pages` (46 pages, 4.8 GB, index.html). `sample.json` holds the cells and is for the analyst only.
+
+**Tested**: unit tests 358 passed. `scripts/test_reading_page.py` (Edge, file://): 11 of 11 on pages 1, 7 (largest, 128 MB) and 46. Technical checks only.
+
+**Next**: the project lead sends the pages to the two readers; reading CSVs come back; analysis per condition (model-only items confirmed by each reader, reader agreement).
+
+**Withdrawn (2026-11-27)**: the RS01 reading pages v1 (`pages_v1_WITHDRAWN_do_not_send`) used a one-off layout. The project lead asked for the standard page;
+it is now written down in `docs/REVIEW_PAGE_FORMAT.md` (from pack M14). RS01 pages will be rebuilt with `build_viewer_page.py`, which needs a full agent run
+(segmentation, measurements, checklist, AI reader) on each of the 46 scans.
+
+## RS01 review pages in the standard format: pack M15 (first 10 scans) and the full pipeline script (2026-11-27)
+
+**Implemented**: `docs/REVIEW_PAGE_FORMAT.md` (the fixed page format, taken from pack M14). `run_full_pipeline.sh` (all ten steps behind pack M14 on the scans of
+one verified QC run; `FROM_STEP` restarts part-way). `build_policy_pack.py --cases-file` (new cases without earlier grades). `nodule_evidence_rows.py` now
+adds E97 / E98 when the dense-lung inventory was not computed for a scan. The 46 RS01 scans are hard links in `data/raw/ct_rate/volumes` to
+`D:/datasets/ct_rate/calib400/volumes` (no copy) and are in `data/raw/ct_rate/cases.json` as set `rs01` (backup of the earlier file in `D:/datasets/ct_rate`).
+QC runs `runs/P1_qc_verified_rs01_{first10,rest36,all46}_20261127_072059`.
+
+**Pack M15** `runs/M15_policy_v3_11_rs01_first10` (10 pages, 1.3 GB, open, CT-RATE label column, AI reader, second segmentation). All steps 10 of 10 ok;
+valid_659_a_1: dense-lung inventory not computed (image too grainy for the consolidation range), listed, other rows present. Pages 46 to 238 MB
+(larger than M14's 67 to 127 MB because some scans are long).
+
+**Tested**: unit tests 358 passed. Page checks (Edge): viewer v6 checks 16 of 16 on valid_849 (largest) and valid_477 (smallest); segmentation checks 8 of 8 on
+valid_477, 7 of 8 on valid_849. The failed check samples the middle axial image of the scan; valid_849 is 1,047 images long and that image is below the right lung,
+where the second model labels 4 stray voxels as right lung near the midline. On a mid-lung image (349) the labels lie on the correct sides in the file, and the
+pixel-by-pixel check that every button draws exactly the file's classes passed. Not a display error; the check's choice of image does not suit long scans.
+
+**Running**: the same pipeline on the other 36 scans (pack M16).
+
+## checklist_v3_12: two sources for "present", no "suggested by segmentation" (project lead, 2026-11-27)
+
+**Implemented**: `configs/checklist_v3_12.json`; `_two_source` in `src/lung_ct/agent/checklist.py` (active only with `two_source_rule`); page and pack wording
+for v3_12 in `build_viewer_page.py` / `build_policy_pack.py`. Rule `two_source_v1_tr02`:
+- A positive answer from a predicted mask alone (pleural fluid >= 20 mL outlined, nodule candidates) is "cannot tell"; the statement lists what was outlined.
+- Pleural effusion, aortic and coronary calcification: "present" when NV-Reason-CT says present AND COLIPRI is above the TR02 fit-half cut-off
+  (0.8197 / 0.0620 / 0.1346) or, for pleural effusion, >= 20 mL fluid is outlined. Only where the answer would otherwise be "cannot tell".
+- Medical material, hiatal hernia, bronchiectasis: NV-Reason-CT alone no longer gives "present".
+
+**Evidence for the choice** (TR02, report labels, confirm half; share of "present" calls the report mentions): NV-Reason-CT alone vs with COLIPRI above the
+cut-off: pleural effusion 73 % -> 91 %, aortic 89 % -> 88 %, coronary 88 % -> 90 %. For 12 of 17 conditions no COLIPRI cut-off on top of NV-Reason-CT reached
+90 % on the fit half; for the others the gain was small or bought by finding fewer. Report labels cannot separate shared model errors from findings the
+report left out: the readers' RS01 grades are the reference for any further condition.
+
+**Effect on the first 10 RS01 scans** (v3_11 -> v3_12): 9 nodule "suggested" -> cannot tell; 2 pleural "suggested" -> present (two sources); 6 coronary and
+1 aortic cannot tell -> present (two sources); 10 reader-only "present" (medical material, hiatal hernia, bronchiectasis) -> cannot tell.
+
+**Tested**: unit tests 367 passed (9 new, `tests/test_v3_12.py`).
+
+**Next**: pack M17 (`runs/M17_policy_v3_12_rs01`) with v3_12 for all 46 RS01 scans once pack M16's pipeline has finished; M15 / M16 (v3_11) are kept, not to be sent.
