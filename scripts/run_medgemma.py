@@ -143,7 +143,7 @@ def infer_case(cid: str, ct_path: Path, cfg: dict, case_dir: Path, processor, mo
     eos = model.generation_config.eos_token_id
     eos = set(eos if isinstance(eos, (list, tuple)) else [eos])
     truncated = len(new) >= gcfg["max_new_tokens"] and int(new[-1]) not in eos
-    parsed = parse_response(text, truncated)
+    parsed = parse_response(text, truncated, cfg["prompt"].get("schema"))
     rec.update({
         "parse_status": parsed["status"],
         "extraction_method": parsed["extraction_method"],

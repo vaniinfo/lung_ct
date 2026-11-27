@@ -1,0 +1,38 @@
+{
+  "config_version": "holoct_ct_questions_v1",
+  "frozen_utc": "2026-11-20",
+  "status": "Written before any HoloCT answer on our cases was seen. Do not reword after looking at results on a set and then report on that set.",
+  "model": {
+    "repo": "Alibaba-DAMO-Academy/HoloCT-4B",
+    "code": "https://github.com/alibaba-damo-academy/HoloCT",
+    "code_commit": "0d3b0a12f5ab0083dbeb81a60c49535404517305",
+    "licence": "MIT (code and weights)"
+  },
+  "training_overlap_note": "HoloCT was trained on the CT-RATE train split. All 70 of our CT-RATE validation patients are in HoloCT's published TEST split (holodata-v1) and none in its train split, so this is not a leak, but the model has seen 20,000 patients from the same hospital, scanners and report style.",
+  "question_template": "Please answer with Yes or No: {q}",
+  "question_template_note": "HoloCT's own 'binary' VQA template (utils/corpus/prompt_templates.py). The exact CT-RATE question wording used in its training is not released.",
+  "decoding": {"do_sample": false, "max_new_tokens": 16, "seed": 42},
+  "questions": [
+    {"ct_rate_label": "Medical material", "q": "Is there medical material (such as a device, catheter, wire, stent or surgical clip) in this CT scan?"},
+    {"ct_rate_label": "Arterial wall calcification", "q": "Is there arterial wall calcification in this CT scan?"},
+    {"ct_rate_label": "Cardiomegaly", "q": "Is there cardiomegaly in this CT scan?"},
+    {"ct_rate_label": "Pericardial effusion", "q": "Is there pericardial effusion in this CT scan?"},
+    {"ct_rate_label": "Coronary artery wall calcification", "q": "Is there coronary artery wall calcification in this CT scan?"},
+    {"ct_rate_label": "Hiatal hernia", "q": "Is there a hiatal hernia in this CT scan?"},
+    {"ct_rate_label": "Lymphadenopathy", "q": "Is there lymphadenopathy in this CT scan?"},
+    {"ct_rate_label": "Emphysema", "q": "Is there emphysema in this CT scan?"},
+    {"ct_rate_label": "Atelectasis", "q": "Is there atelectasis in this CT scan?"},
+    {"ct_rate_label": "Lung nodule", "q": "Is there a lung nodule in this CT scan?"},
+    {"ct_rate_label": "Lung opacity", "q": "Is there lung opacity in this CT scan?"},
+    {"ct_rate_label": "Pulmonary fibrotic sequela", "q": "Are there pulmonary fibrotic sequelae in this CT scan?"},
+    {"ct_rate_label": "Pleural effusion", "q": "Is there pleural effusion in this CT scan?"},
+    {"ct_rate_label": "Mosaic attenuation pattern", "q": "Is there a mosaic attenuation pattern in this CT scan?"},
+    {"ct_rate_label": "Peribronchial thickening", "q": "Is there peribronchial thickening in this CT scan?"},
+    {"ct_rate_label": "Consolidation", "q": "Is there consolidation in this CT scan?"},
+    {"ct_rate_label": "Bronchiectasis", "q": "Is there bronchiectasis in this CT scan?"},
+    {"ct_rate_label": "Interlobular septal thickening", "q": "Is there interlobular septal thickening in this CT scan?"}
+  ],
+  "findings_prompt": "Identify all abnormal findings in the lung, pleura, trachea and bronchi.",
+  "findings_grounded_prompt": "Identify and segment all abnormal findings in the lung, pleura, trachea and bronchi.",
+  "findings_note": "HoloCT's own ReXGrounding demo prompts and decoding (sampling, temperature 0.15, top-p 0.85, repetition penalty 1.15, max 1024 new tokens). Text and masks are saved for review; they are not scored."
+}

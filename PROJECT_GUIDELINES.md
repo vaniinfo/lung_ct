@@ -64,8 +64,11 @@ Each phase must produce:
 - Exchange NIfTI and JSON/CSV on disk between environments
 - Run GPU stages serially in separate processes
 
-## Data Budget
-- Max 20GB new data, 30GB model weights for initial scope
+## Data Storage
+- No fixed size limit on new data or model weights (the 20 GB / 30 GB limits of the initial scope were removed by the project lead on 2026-11-26; D: had 6.5 TB free)
+- New downloaded datasets go under D:/datasets/<dataset>/ (project lead, 2026-11-26), outside the repository; data already in data/raw stays where it is
+- All data, models and environments go on D:; never on C: (nearly full)
+- Record the size and source of every download in the run manifest
 - COVID CT dataset ~1.1GB (20 cases + masks)
 - Do not mirror CT-RATE in full
 
@@ -74,3 +77,6 @@ Each phase must produce:
 - Never commit credentials, tokens, or secrets
 - Keep HF tokens in environment variables only
 - No automatic public repository push
+
+## Review Pages
+- Every page sent to a reader follows docs/REVIEW_PAGE_FORMAT.md and is built with scripts/build_viewer_page.py; changes to that format need the project lead's approval first

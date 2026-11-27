@@ -1,0 +1,225 @@
+{
+ "config_version": "nvreason_prompt_sets_v1",
+ "frozen_utc": "2026-11-26",
+ "plan": "docs/prompt_tests/PT02_nvreason_prompts_PLAN.md",
+ "note": "Prompt sets for prompt test PT02, written before any answer was compared with a label. Changing this file makes a new test.",
+ "model_config": "configs/nvreason_ct_v1.json",
+ "fixed": {
+  "do_sample": false,
+  "anatomy_region": "chest",
+  "normalize_mode": "ct",
+  "scan_read_once": "the scan and everything before the question are processed once per scan and reused; the question is then fed one token at a time, as generation does. Checked against the ordinary call on the first scan and every 20th: same text required, otherwise the run stops."
+ },
+ "sets": {
+  "A": {
+   "idea": "baseline: the wording used so far",
+   "template": "Is {phrase} present in this CT? Answer only Yes or No.",
+   "thinking": false,
+   "max_new_tokens": 16,
+   "read": "yes_no",
+   "score": true
+  },
+  "A2": {
+   "idea": "harmless rewording 1 (for the wording-stability check and the vote)",
+   "template": "Does this CT show {phrase}? Answer only Yes or No.",
+   "thinking": false,
+   "max_new_tokens": 16,
+   "read": "yes_no",
+   "score": true
+  },
+  "A3": {
+   "idea": "harmless rewording 2 (for the wording-stability check and the vote)",
+   "template": "Is there {phrase} in this CT scan? Answer only Yes or No.",
+   "thinking": false,
+   "max_new_tokens": 16,
+   "read": "yes_no",
+   "score": true
+  },
+  "B": {
+   "idea": "reasoning on: the baseline wording, the model may think before it answers",
+   "template": "Is {phrase} present in this CT? Answer only Yes or No.",
+   "thinking": true,
+   "max_new_tokens": 512,
+   "read": "yes_no",
+   "score": false
+  },
+  "C": {
+   "idea": "a plain definition inside the question",
+   "template": "Is {phrase} ({definition}) present in this CT? Answer only Yes or No.",
+   "thinking": false,
+   "max_new_tokens": 16,
+   "read": "yes_no",
+   "score": true
+  },
+  "D": {
+   "idea": "report first: the model writes its structured report, then is asked with that report in the conversation",
+   "report_prompt": "write a structured chest CT report",
+   "report_thinking": true,
+   "report_max_new_tokens": 2048,
+   "template": "Based on the CT and your report, is {phrase} present? Answer only Yes or No.",
+   "thinking": false,
+   "max_new_tokens": 16,
+   "read": "yes_no",
+   "score": true
+  },
+  "E": {
+   "idea": "location first: asked where, with None as an offered answer",
+   "template": "Where in this CT is {phrase}? Answer with the location, or answer None if it is not present.",
+   "thinking": false,
+   "max_new_tokens": 32,
+   "read": "location",
+   "score": false
+  }
+ },
+ "derived_sets": {
+  "V": {
+   "idea": "vote of the three wordings A, A2, A3: present when at least two say present",
+   "from": [
+    "A",
+    "A2",
+    "A3"
+   ],
+   "rule": "majority; a scan-condition with an unreadable answer in any of the three is unreadable"
+  }
+ },
+ "compared_with_baseline": [
+  "V",
+  "B",
+  "C",
+  "D",
+  "E"
+ ],
+ "reading": {
+  "yes_no": "after any reasoning block: first word 'yes' -> present, 'no' -> absent, anything else -> unreadable (counted, never guessed)",
+  "location": "after any reasoning block: first word none / no / nowhere / absent / not -> absent; empty -> unreadable; anything else -> present"
+ },
+ "analysis": {
+  "main_measure": "macro balanced accuracy = mean over conditions with >= 10 positive scans of (found share + correctly-absent share) / 2, scan level",
+  "counts": "found / missed / extra / correctly absent per condition and set, always reported",
+  "secondary": "AUROC of the Yes-score per condition for sets that have one",
+  "min_positive_scans_to_interpret": 10,
+  "unreadable": "an unreadable answer counts as wrong for that scan-condition (missed if labelled, extra if not)",
+  "max_unreadable_share": 0.01,
+  "bootstrap": {
+   "unit": "patient",
+   "resamples": 2000,
+   "seed": 20261126,
+   "interval": [
+    2.5,
+    97.5
+   ]
+  },
+  "rule": "a set replaces A only if (1) the interval of its macro-balanced-accuracy difference to A is entirely above 0, (2) no condition with >= 10 positive scans is more than 0.05 below A in balanced accuracy, (3) its unreadable share is at most 0.01; among several, the highest macro balanced accuracy",
+  "stability": "wording stability = share of scan-conditions where A, A2 and A3 give the same answer; error rate of A is reported separately for unanimous and for split scan-conditions"
+ },
+ "conditions": [
+  {
+   "key": "ground_glass",
+   "phrase": "ground-glass opacity",
+   "ct_rate_label": null,
+   "definition": "hazy increased lung density that does not hide the vessels"
+  },
+  {
+   "key": "consolidation",
+   "phrase": "consolidation",
+   "ct_rate_label": "Consolidation",
+   "definition": "dense lung opacity that hides the vessels"
+  },
+  {
+   "key": "atelectasis",
+   "phrase": "atelectasis",
+   "ct_rate_label": "Atelectasis",
+   "definition": "collapsed or airless lung"
+  },
+  {
+   "key": "lung_nodule",
+   "phrase": "a lung nodule",
+   "ct_rate_label": "Lung nodule",
+   "definition": "a small rounded lung opacity up to 3 cm"
+  },
+  {
+   "key": "emphysema",
+   "phrase": "emphysema",
+   "ct_rate_label": "Emphysema",
+   "definition": "areas of abnormally low lung density from destroyed air spaces"
+  },
+  {
+   "key": "bronchiectasis",
+   "phrase": "bronchiectasis",
+   "ct_rate_label": "Bronchiectasis",
+   "definition": "abnormally widened bronchi"
+  },
+  {
+   "key": "peribronchial_thickening",
+   "phrase": "peribronchial thickening",
+   "ct_rate_label": "Peribronchial thickening",
+   "definition": "thickened bronchial walls"
+  },
+  {
+   "key": "interlobular_septal_thickening",
+   "phrase": "interlobular septal thickening",
+   "ct_rate_label": "Interlobular septal thickening",
+   "definition": "thickened lines between the lung lobules"
+  },
+  {
+   "key": "mosaic_attenuation",
+   "phrase": "a mosaic attenuation pattern",
+   "ct_rate_label": "Mosaic attenuation pattern",
+   "definition": "a patchwork of lung regions with different density"
+  },
+  {
+   "key": "fibrotic_sequela",
+   "phrase": "pulmonary fibrotic sequela",
+   "ct_rate_label": "Pulmonary fibrotic sequela",
+   "definition": "scar-like fibrotic bands or changes in the lung"
+  },
+  {
+   "key": "pleural_effusion",
+   "phrase": "a pleural effusion",
+   "ct_rate_label": "Pleural effusion",
+   "definition": "fluid in the pleural space"
+  },
+  {
+   "key": "pericardial_effusion",
+   "phrase": "a pericardial effusion",
+   "ct_rate_label": "Pericardial effusion",
+   "definition": "fluid around the heart"
+  },
+  {
+   "key": "cardiomegaly",
+   "phrase": "cardiomegaly",
+   "ct_rate_label": "Cardiomegaly",
+   "definition": "an enlarged heart"
+  },
+  {
+   "key": "arterial_calcification",
+   "phrase": "arterial wall calcification",
+   "ct_rate_label": "Arterial wall calcification",
+   "definition": "calcium in the wall of the aorta or other arteries"
+  },
+  {
+   "key": "coronary_calcification",
+   "phrase": "coronary artery wall calcification",
+   "ct_rate_label": "Coronary artery wall calcification",
+   "definition": "calcium in the walls of the coronary arteries"
+  },
+  {
+   "key": "lymphadenopathy",
+   "phrase": "lymphadenopathy",
+   "ct_rate_label": "Lymphadenopathy",
+   "definition": "enlarged lymph nodes"
+  },
+  {
+   "key": "hiatal_hernia",
+   "phrase": "a hiatal hernia",
+   "ct_rate_label": "Hiatal hernia",
+   "definition": "part of the stomach above the diaphragm"
+  },
+  {
+   "key": "medical_material",
+   "phrase": "medical material",
+   "ct_rate_label": "Medical material",
+   "definition": "devices such as catheters, pacemakers, stents, surgical clips or sutures"
+  }
+ ]
+}

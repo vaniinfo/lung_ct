@@ -1,0 +1,240 @@
+{
+  "config_version": "checklist_v2",
+  "frozen_utc": "2026-11-17",
+  "status": "PROVISIONAL - v1 thresholds plus two pilot-motivated changes (noise handling, readers not voting). Evaluate on test20 (patients not in pilot10).",
+  "statuses": [
+    "present",
+    "absent",
+    "cannot tell",
+    "cannot assess"
+  ],
+  "decision_rule": [
+    "1. If the condition needs contrast and the scan is not a contrast scan: 'cannot assess'.",
+    "2. If a measurement exists and its value is outside the grey zone, the measurement decides (basis 'measured'). The classifier and AI readers are flagged for the reviewer when they disagree; they do not overrule.",
+    "3. Without a decisive measurement, 'absent' needs the classifier <= low threshold (basis 'classifier only, uncalibrated').",
+    "4. Everything else: 'cannot tell'. AI readers are shown but do not vote (readers_vote = false); the classifier alone never makes a condition 'present'."
+  ],
+  "banned_terms": [
+    "opacity",
+    "opacities",
+    "opacification"
+  ],
+  "banned_terms_note": "The clinician reviewer (2026-11-15): radiologist reviewers will not accept the generic word. Use ground-glass, consolidation, or 'increased lung density, type not determined'.",
+  "measurements": {
+    "contrast_aorta_hu": {
+      "non_contrast_below": 100,
+      "contrast_above": 150,
+      "note": "median HU of the eroded TotalSegmentator aorta; unenhanced blood is about 30-60 HU"
+    },
+    "dependent_band_fraction": 0.2,
+    "dependent_band_note": "Per axial slice and lung, the most posterior 20% of the lung's front-to-back extent is 'dependent' (gravity-related density in a supine patient). Density there is reported but not used to call ground-glass or consolidation.",
+    "ground_glass_hu": [
+      -700,
+      -300
+    ],
+    "consolidation_hu": [
+      -300,
+      100
+    ],
+    "density_lung_erosion_voxels": 2,
+    "density_exclude": [
+      "lung_vessels/lung_arteries",
+      "lung_vessels/lung_veins",
+      "lung_vessels/lung_airways",
+      "lung_vessels/lung_airways_wall"
+    ],
+    "density_exclude_dilation_voxels": 1,
+    "density_opening_voxels": 1,
+    "aortic_calcium_hu": 130,
+    "aortic_calcium_min_component_voxels": 3,
+    "aortic_calcium_mask_dilation_voxels": 1,
+    "aortic_calcium_min_peak_hu": 300,
+    "aortic_calcium_note": "Added 2026-11-17 after the first CT-RATE run (valid_5): with 1 mm slices, blood noise forms small clusters just above 130 HU. A calcium spot must now also contain at least one voxel >= 300 HU. Measurement fix, not a threshold change."
+  },
+  "conditions": [
+    {
+      "key": "ground_glass",
+      "label": "Ground-glass",
+      "ct_rate_label": null,
+      "measured_by": "non-dependent lung with HU -700 to -300, % of lung",
+      "present_at_least": 3.0,
+      "absent_below": 1.0,
+      "unit": "% of lung",
+      "classifier_key": "ground_glass",
+      "lung_location": true,
+      "note": "Partial volume around vessels and motion also fall in this band; type separation by HU alone is approximate."
+    },
+    {
+      "key": "consolidation",
+      "label": "Consolidation",
+      "ct_rate_label": "Consolidation",
+      "measured_by": "non-dependent lung with HU -300 to 100, mL",
+      "present_at_least": 30,
+      "absent_below": 5,
+      "unit": "mL",
+      "classifier_key": "consolidation",
+      "lung_location": true
+    },
+    {
+      "key": "lung_density",
+      "label": "Increased lung density (ground-glass or consolidation)",
+      "ct_rate_label": "Lung opacity",
+      "measured_by": "ground_glass OR consolidation (non-dependent)",
+      "classifier_key": "lung_opacity",
+      "lung_location": true
+    },
+    {
+      "key": "atelectasis",
+      "label": "Atelectasis",
+      "ct_rate_label": "Atelectasis",
+      "classifier_key": "atelectasis",
+      "note": "Dependent (posterior) density is reported as context only; no measurement rule yet."
+    },
+    {
+      "key": "lung_nodule",
+      "label": "Lung nodule",
+      "ct_rate_label": "Lung nodule",
+      "classifier_key": "lung_nodule",
+      "note": "No nodule detector in the pipeline yet."
+    },
+    {
+      "key": "emphysema",
+      "label": "Emphysema",
+      "ct_rate_label": "Emphysema",
+      "measured_by": "LAA-950, % of lung",
+      "present_at_least": 6.0,
+      "absent_below": 2.0,
+      "unit": "% of lung",
+      "classifier_key": "emphysema",
+      "note": "Grey zone 2-6% because thin slices and sharp kernels raise LAA-950 in normal lungs; mild (centrilobular) emphysema often stays below 6%."
+    },
+    {
+      "key": "bronchiectasis",
+      "label": "Bronchiectasis",
+      "ct_rate_label": "Bronchiectasis",
+      "classifier_key": "bronchiectasis",
+      "note": "Airway-tree measurements are not yet validated as bronchiectasis evidence (planned: airway-to-artery ratio)."
+    },
+    {
+      "key": "peribronchial_thickening",
+      "label": "Peribronchial thickening",
+      "ct_rate_label": "Peribronchial thickening",
+      "classifier_key": "peribronchial_thickening"
+    },
+    {
+      "key": "interlobular_septal_thickening",
+      "label": "Interlobular septal thickening",
+      "ct_rate_label": "Interlobular septal thickening",
+      "classifier_key": "septal_thickening"
+    },
+    {
+      "key": "mosaic_attenuation",
+      "label": "Mosaic attenuation",
+      "ct_rate_label": "Mosaic attenuation pattern",
+      "classifier_key": "mosaic_attenuation"
+    },
+    {
+      "key": "fibrotic_sequela",
+      "label": "Fibrotic (scarring) changes",
+      "ct_rate_label": "Pulmonary fibrotic sequela",
+      "classifier_key": "fibrotic_sequela"
+    },
+    {
+      "key": "pleural_effusion",
+      "label": "Pleural effusion",
+      "ct_rate_label": "Pleural effusion",
+      "measured_by": "TotalSegmentator pleural effusion mask, mL (both sides)",
+      "present_at_least": 20,
+      "absent_below": 5,
+      "unit": "mL",
+      "classifier_key": "pleural_effusion"
+    },
+    {
+      "key": "pericardial_effusion",
+      "label": "Pericardial effusion",
+      "ct_rate_label": "Pericardial effusion",
+      "measured_by": "TotalSegmentator pericardial effusion mask, mL",
+      "present_at_least": 50,
+      "absent_below": 20,
+      "unit": "mL",
+      "classifier_key": "pericardial_effusion",
+      "note": "Up to about 50 mL of pericardial fluid is normal."
+    },
+    {
+      "key": "cardiomegaly",
+      "label": "Cardiomegaly (enlarged heart)",
+      "ct_rate_label": "Cardiomegaly",
+      "measured_by": "axial cardiothoracic ratio = widest heart / widest inner chest (lungs)",
+      "present_at_least": 0.55,
+      "absent_below": 0.5,
+      "unit": "ratio",
+      "classifier_key": "cardiomegaly",
+      "note": "Axial CT ratio, not the chest X-ray ratio; 0.50-0.55 is a grey zone."
+    },
+    {
+      "key": "arterial_calcification",
+      "label": "Aortic wall calcification",
+      "ct_rate_label": "Arterial wall calcification",
+      "measured_by": "voxels >= 130 HU in/at the aorta mask (non-contrast only), mL",
+      "present_at_least": 0.1,
+      "absent_below": 0.02,
+      "unit": "mL",
+      "classifier_key": "arterial_calcification",
+      "note": "Only measurable without contrast (contrast-filled blood is also above 130 HU)."
+    },
+    {
+      "key": "coronary_calcification",
+      "label": "Coronary artery calcification",
+      "ct_rate_label": "Coronary artery wall calcification",
+      "classifier_key": "coronary_calcification"
+    },
+    {
+      "key": "lymphadenopathy",
+      "label": "Enlarged lymph nodes",
+      "ct_rate_label": "Lymphadenopathy",
+      "classifier_key": "lymphadenopathy",
+      "contrast_helps": true
+    },
+    {
+      "key": "hiatal_hernia",
+      "label": "Hiatal hernia",
+      "ct_rate_label": "Hiatal hernia",
+      "classifier_key": "hiatal_hernia"
+    },
+    {
+      "key": "medical_material",
+      "label": "Medical material (devices, wires, stents)",
+      "ct_rate_label": "Medical material",
+      "classifier_key": "medical_material"
+    },
+    {
+      "key": "pulmonary_embolism",
+      "label": "Pulmonary embolism",
+      "ct_rate_label": null,
+      "needs_contrast": true,
+      "note": "Needs a contrast CT (CT pulmonary angiogram)."
+    }
+  ],
+  "reliability": {
+    "contrast": "moderate - aorta density threshold; standard physiology, not validated here",
+    "effusion_masks": "moderate - TotalSegmentator pleural/pericardial effusion model (published validation by its authors), not validated on this project's data",
+    "cardiothoracic_ratio": "low-moderate - computed from predicted heart and lung masks; axial CT ratio differs from the chest X-ray ratio; not validated here",
+    "heart_volume": "moderate - TotalSegmentator heart mask; includes pericardium region",
+    "aortic_calcium": "low-moderate - HU threshold at the predicted aorta; nearby bone or contrast can add voxels",
+    "density_type": "low - HU bands inside predicted lungs; separates ground-glass from consolidation only approximately; partial volume and motion add voxels",
+    "dependent_density": "low - context only; gravity-related density at the back of the lungs is usually normal",
+    "noise": "moderate - standard deviation in the predicted aorta; plaques and mask edges add a little"
+  },
+  "derived_from": "checklist_v1",
+  "changes_from_v1": [
+    "A. Image noise: blood SD in the aorta is measured (E69). Above 60 HU the HU-threshold measurements (emphysema LAA-950, aortic calcium, ground-glass / consolidation ranges) use a Gaussian-smoothed copy (sigma 1.0 mm); if still above 60 HU, emphysema and calcium are not reported. Reason: pilot run on sharp, 0.3 mm reconstructions showed blood SD 115 HU vs 32 HU, giving false calcium and emphysema.",
+    "C. AI readers are shown but do not vote: in the pilot they answered 'absent' to all 153 condition questions. Without a measurement, 'present' is no longer possible; the classifier can still support 'absent'.",
+    "All thresholds otherwise unchanged from v1. v2 must be judged on the fresh test set (test20), not on the pilot10 cases that motivated it."
+  ],
+  "readers_vote": false,
+  "noise": {
+    "blood_sd_limit_hu": 60,
+    "smoothing_sigma_mm": 1.0,
+    "note": "Typical unenhanced blood SD on standard reconstructions is about 20-40 HU; 60 HU flags sharp/thin reconstructions."
+  }
+}

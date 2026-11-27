@@ -1,0 +1,36 @@
+{
+  "config_version": "agent_evidence_v1",
+  "status": "PILOT - thresholds chosen on the 10-case COVID pilot (2026-11-15); not prospectively defined, not clinically validated.",
+  "reference_rules": "configs/reference_answer_rules_v2.json",
+  "opacity_proxy": {
+    "name": "dense-lung proxy (HU band inside predicted lungs)",
+    "hu_band": [-700, -100],
+    "lung_erosion_voxels": 2,
+    "exclude": ["lung_vessels/lung_arteries", "lung_vessels/lung_veins", "lung_vessels/lung_airways", "lung_vessels/lung_airways_wall"],
+    "exclude_dilation_voxels": 1,
+    "opening_voxels": 1,
+    "note": "Not a lesion segmentation: counts lung voxels denser than aerated lung after removing vessels, airways and the pleural rim. Dependent atelectasis and partial volume also count. To be replaced by a trained opacity segmenter (pipeline step 1)."
+  },
+  "pilot_validation": {
+    "date": "2026-11-15",
+    "cases": "coronacases_001-010 (all COVID, HU-valid)",
+    "dice_vs_expert_infection_mask": "0.43-0.73 (median about 0.59)",
+    "volume": "under-estimates large faint disease (coronacases_001: 139 vs 429 mL; 003: 482 vs 1037 mL)",
+    "answers_vs_expert_mask_rules_v2": {"laterality": "6/10", "craniocaudal": "8/10", "axial": "8/10"},
+    "caveat": "The demo case is part of this pilot set, so these figures are not an independent test."
+  },
+  "reliability": {
+    "lung_volumes": "high - TotalSegmentator lungs vs expert lung masks, Dice 0.975-0.985 on the 10 pilot cases (Phase 2)",
+    "lobe_volumes": "moderate - TotalSegmentator lobes, no lobe reference in this dataset",
+    "opacity_proxy_amount": "low-moderate - proxy, Dice 0.43-0.73 vs expert masks on the pilot; under-estimates faint disease",
+    "opacity_proxy_distribution": "moderate - zone 8/10 and peripheral/central 8/10 vs expert masks on the pilot (rules v2, provisional definitions)",
+    "opacity_proxy_presence": "low - no normal scans available to calibrate; dependent atelectasis also counts",
+    "emphysema_laa950": "moderate - standard measure, not validated here; depends on slice thickness and reconstruction kernel",
+    "airway_tree": "low - unvalidated, no airway reference; counts depend on segmentation and settings; fewer branches do not mean airway loss"
+  },
+  "crosscheck": {
+    "strong_side_share": 0.75,
+    "note": "If one side holds >= 75% of the dense-lung proxy, a reader answer of 'bilateral' is flagged as missing a strong one-sided predominance."
+  },
+  "emphysema_threshold_hu": -950
+}

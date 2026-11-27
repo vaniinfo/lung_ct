@@ -1,0 +1,780 @@
+{
+ "config_version": "colipri_prompt_sets_v1",
+ "frozen_utc": "2026-11-26",
+ "plan": "docs/prompt_tests/PT01_colipri_prompts_PLAN.md",
+ "note": "Prompt sets for prompt test PT01, written before any score was computed. Changing this file makes a new test.",
+ "model_config": "configs/colipri_ct_v1.json",
+ "sets": {
+  "A": "baseline: the short prompts of configs/colipri_ct_v1.json, unchanged",
+  "B": "four sentence forms per condition (the first is the baseline form), embeddings averaged",
+  "C": "the short form over two to four names for the condition (the first is the baseline name), embeddings averaged",
+  "D": "native: mean embedding of report Findings sections, built at run time from the rule below"
+ },
+ "averaging": "normalise each text embedding, average per side, normalise the average",
+ "native": {
+  "source": "CT-RATE validation_reports.csv (Findings_EN) with valid_predicted_labels.csv, both from the local hf_cache",
+  "exclude": "every patient of the test scans",
+  "one_report_per_patient": "first volume name in sorted order",
+  "n_positive": 50,
+  "n_negative": 50,
+  "seed": 20261126,
+  "not_available_for": [
+   "ground_glass"
+  ],
+  "max_tokens": 512
+ },
+ "analysis": {
+  "main_measure": "macro AUROC over the 18 CT-RATE conditions, scan level",
+  "secondary": "average precision",
+  "min_positive_scans_to_interpret": 10,
+  "bootstrap": {
+   "unit": "patient",
+   "resamples": 2000,
+   "seed": 20261126,
+   "interval": [
+    2.5,
+    97.5
+   ]
+  },
+  "rule": "a set replaces A only if the interval of its macro-AUROC difference to A is entirely above 0 AND no condition with >= 10 positive scans is more than 0.05 below A; among several, the highest macro AUROC"
+ },
+ "findings": [
+  {
+   "key": "lung_opacity",
+   "label": "Lung opacity",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Lung opacities present"
+    ],
+    "negative": [
+     "No lung opacities present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Lung opacities present",
+     "There is lung opacity.",
+     "Lung opacity is observed.",
+     "Findings consistent with lung opacity."
+    ],
+    "negative": [
+     "No lung opacities present",
+     "There is no lung opacity.",
+     "No lung opacity is observed.",
+     "No findings consistent with lung opacity."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Lung opacities present",
+     "Pulmonary opacities present",
+     "Parenchymal opacities present"
+    ],
+    "negative": [
+     "No lung opacities present",
+     "No pulmonary opacities present",
+     "No parenchymal opacities present"
+    ]
+   }
+  },
+  {
+   "key": "consolidation",
+   "label": "Consolidation",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Consolidation present"
+    ],
+    "negative": [
+     "No consolidation present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Consolidation present",
+     "There is consolidation.",
+     "Consolidation is observed.",
+     "Findings consistent with consolidation."
+    ],
+    "negative": [
+     "No consolidation present",
+     "There is no consolidation.",
+     "No consolidation is observed.",
+     "No findings consistent with consolidation."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Consolidation present",
+     "Airspace consolidation present",
+     "Consolidated lung parenchyma present"
+    ],
+    "negative": [
+     "No consolidation present",
+     "No airspace consolidation present",
+     "No consolidated lung parenchyma present"
+    ]
+   }
+  },
+  {
+   "key": "ground_glass",
+   "label": "Ground-glass opacity",
+   "ct_rate_label": false,
+   "A": {
+    "positive": [
+     "Ground-glass opacities present"
+    ],
+    "negative": [
+     "No ground-glass opacities present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Ground-glass opacities present",
+     "There is ground-glass opacity.",
+     "Ground-glass opacity is observed.",
+     "Findings consistent with ground-glass opacity."
+    ],
+    "negative": [
+     "No ground-glass opacities present",
+     "There is no ground-glass opacity.",
+     "No ground-glass opacity is observed.",
+     "No findings consistent with ground-glass opacity."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Ground-glass opacities present",
+     "Ground-glass densities present",
+     "Ground-glass attenuation present"
+    ],
+    "negative": [
+     "No ground-glass opacities present",
+     "No ground-glass densities present",
+     "No ground-glass attenuation present"
+    ]
+   }
+  },
+  {
+   "key": "atelectasis",
+   "label": "Atelectasis",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Atelectasis present"
+    ],
+    "negative": [
+     "No atelectasis present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Atelectasis present",
+     "There is atelectasis.",
+     "Atelectasis is observed.",
+     "Findings consistent with atelectasis."
+    ],
+    "negative": [
+     "No atelectasis present",
+     "There is no atelectasis.",
+     "No atelectasis is observed.",
+     "No findings consistent with atelectasis."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Atelectasis present",
+     "Lung collapse present",
+     "Atelectatic changes present"
+    ],
+    "negative": [
+     "No atelectasis present",
+     "No lung collapse present",
+     "No atelectatic changes present"
+    ]
+   }
+  },
+  {
+   "key": "lung_nodule",
+   "label": "Lung nodule",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Lung nodules present"
+    ],
+    "negative": [
+     "No lung nodules present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Lung nodules present",
+     "There is a lung nodule.",
+     "A lung nodule is observed.",
+     "Findings consistent with lung nodule."
+    ],
+    "negative": [
+     "No lung nodules present",
+     "There is no lung nodule.",
+     "No lung nodule is observed.",
+     "No findings consistent with lung nodule."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Lung nodules present",
+     "Pulmonary nodules present",
+     "Parenchymal nodules present"
+    ],
+    "negative": [
+     "No lung nodules present",
+     "No pulmonary nodules present",
+     "No parenchymal nodules present"
+    ]
+   }
+  },
+  {
+   "key": "emphysema",
+   "label": "Emphysema",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Emphysema present"
+    ],
+    "negative": [
+     "No emphysema present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Emphysema present",
+     "There is emphysema.",
+     "Emphysema is observed.",
+     "Findings consistent with emphysema."
+    ],
+    "negative": [
+     "No emphysema present",
+     "There is no emphysema.",
+     "No emphysema is observed.",
+     "No findings consistent with emphysema."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Emphysema present",
+     "Emphysematous changes present"
+    ],
+    "negative": [
+     "No emphysema present",
+     "No emphysematous changes present"
+    ]
+   }
+  },
+  {
+   "key": "bronchiectasis",
+   "label": "Bronchiectasis",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Bronchiectasis present"
+    ],
+    "negative": [
+     "No bronchiectasis present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Bronchiectasis present",
+     "There is bronchiectasis.",
+     "Bronchiectasis is observed.",
+     "Findings consistent with bronchiectasis."
+    ],
+    "negative": [
+     "No bronchiectasis present",
+     "There is no bronchiectasis.",
+     "No bronchiectasis is observed.",
+     "No findings consistent with bronchiectasis."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Bronchiectasis present",
+     "Bronchiectatic changes present",
+     "Dilated bronchi present"
+    ],
+    "negative": [
+     "No bronchiectasis present",
+     "No bronchiectatic changes present",
+     "No dilated bronchi present"
+    ]
+   }
+  },
+  {
+   "key": "septal_thickening",
+   "label": "Interlobular septal thickening",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Interlobular septal thickening present"
+    ],
+    "negative": [
+     "No interlobular septal thickening present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Interlobular septal thickening present",
+     "There is interlobular septal thickening.",
+     "Interlobular septal thickening is observed.",
+     "Findings consistent with interlobular septal thickening."
+    ],
+    "negative": [
+     "No interlobular septal thickening present",
+     "There is no interlobular septal thickening.",
+     "No interlobular septal thickening is observed.",
+     "No findings consistent with interlobular septal thickening."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Interlobular septal thickening present",
+     "Thickened interlobular septa present",
+     "Septal thickening present"
+    ],
+    "negative": [
+     "No interlobular septal thickening present",
+     "No thickened interlobular septa present",
+     "No septal thickening present"
+    ]
+   }
+  },
+  {
+   "key": "peribronchial_thickening",
+   "label": "Peribronchial thickening",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Peribronchial thickening present"
+    ],
+    "negative": [
+     "No peribronchial thickening present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Peribronchial thickening present",
+     "There is peribronchial thickening.",
+     "Peribronchial thickening is observed.",
+     "Findings consistent with peribronchial thickening."
+    ],
+    "negative": [
+     "No peribronchial thickening present",
+     "There is no peribronchial thickening.",
+     "No peribronchial thickening is observed.",
+     "No findings consistent with peribronchial thickening."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Peribronchial thickening present",
+     "Bronchial wall thickening present",
+     "Thickened bronchial walls present"
+    ],
+    "negative": [
+     "No peribronchial thickening present",
+     "No bronchial wall thickening present",
+     "No thickened bronchial walls present"
+    ]
+   }
+  },
+  {
+   "key": "mosaic_attenuation",
+   "label": "Mosaic attenuation pattern",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Mosaic attenuation pattern present"
+    ],
+    "negative": [
+     "No mosaic attenuation pattern present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Mosaic attenuation pattern present",
+     "There is a mosaic attenuation pattern.",
+     "A mosaic attenuation pattern is observed.",
+     "Findings consistent with mosaic attenuation pattern."
+    ],
+    "negative": [
+     "No mosaic attenuation pattern present",
+     "There is no mosaic attenuation pattern.",
+     "No mosaic attenuation pattern is observed.",
+     "No findings consistent with mosaic attenuation pattern."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Mosaic attenuation pattern present",
+     "Mosaic attenuation present",
+     "Mosaic perfusion pattern present"
+    ],
+    "negative": [
+     "No mosaic attenuation pattern present",
+     "No mosaic attenuation present",
+     "No mosaic perfusion pattern present"
+    ]
+   }
+  },
+  {
+   "key": "fibrotic_sequela",
+   "label": "Pulmonary fibrotic sequela",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Pulmonary fibrotic sequelae present"
+    ],
+    "negative": [
+     "No pulmonary fibrotic sequelae present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Pulmonary fibrotic sequelae present",
+     "There are pulmonary fibrotic sequelae.",
+     "Pulmonary fibrotic sequelae are observed.",
+     "Findings consistent with pulmonary fibrotic sequelae."
+    ],
+    "negative": [
+     "No pulmonary fibrotic sequelae present",
+     "There are no pulmonary fibrotic sequelae.",
+     "No pulmonary fibrotic sequelae are observed.",
+     "No findings consistent with pulmonary fibrotic sequelae."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Pulmonary fibrotic sequelae present",
+     "Fibrotic changes of the lung present",
+     "Sequelae fibrotic bands present"
+    ],
+    "negative": [
+     "No pulmonary fibrotic sequelae present",
+     "No fibrotic changes of the lung present",
+     "No sequelae fibrotic bands present"
+    ]
+   }
+  },
+  {
+   "key": "pleural_effusion",
+   "label": "Pleural effusion",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Pleural effusion present"
+    ],
+    "negative": [
+     "No pleural effusion present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Pleural effusion present",
+     "There is a pleural effusion.",
+     "A pleural effusion is observed.",
+     "Findings consistent with pleural effusion."
+    ],
+    "negative": [
+     "No pleural effusion present",
+     "There is no pleural effusion.",
+     "No pleural effusion is observed.",
+     "No findings consistent with pleural effusion."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Pleural effusion present",
+     "Pleural fluid present"
+    ],
+    "negative": [
+     "No pleural effusion present",
+     "No pleural fluid present"
+    ]
+   }
+  },
+  {
+   "key": "pericardial_effusion",
+   "label": "Pericardial effusion",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Pericardial effusion present"
+    ],
+    "negative": [
+     "No pericardial effusion present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Pericardial effusion present",
+     "There is a pericardial effusion.",
+     "A pericardial effusion is observed.",
+     "Findings consistent with pericardial effusion."
+    ],
+    "negative": [
+     "No pericardial effusion present",
+     "There is no pericardial effusion.",
+     "No pericardial effusion is observed.",
+     "No findings consistent with pericardial effusion."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Pericardial effusion present",
+     "Pericardial fluid present"
+    ],
+    "negative": [
+     "No pericardial effusion present",
+     "No pericardial fluid present"
+    ]
+   }
+  },
+  {
+   "key": "cardiomegaly",
+   "label": "Cardiomegaly",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Cardiomegaly present"
+    ],
+    "negative": [
+     "No cardiomegaly present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Cardiomegaly present",
+     "There is cardiomegaly.",
+     "Cardiomegaly is observed.",
+     "Findings consistent with cardiomegaly."
+    ],
+    "negative": [
+     "No cardiomegaly present",
+     "There is no cardiomegaly.",
+     "No cardiomegaly is observed.",
+     "No findings consistent with cardiomegaly."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Cardiomegaly present",
+     "Enlarged heart present",
+     "Increased heart size present"
+    ],
+    "negative": [
+     "No cardiomegaly present",
+     "No enlarged heart present",
+     "No increased heart size present"
+    ]
+   }
+  },
+  {
+   "key": "lymphadenopathy",
+   "label": "Lymphadenopathy",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Lymphadenopathy present"
+    ],
+    "negative": [
+     "No lymphadenopathy present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Lymphadenopathy present",
+     "There is lymphadenopathy.",
+     "Lymphadenopathy is observed.",
+     "Findings consistent with lymphadenopathy."
+    ],
+    "negative": [
+     "No lymphadenopathy present",
+     "There is no lymphadenopathy.",
+     "No lymphadenopathy is observed.",
+     "No findings consistent with lymphadenopathy."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Lymphadenopathy present",
+     "Enlarged lymph nodes present",
+     "Pathologically enlarged lymph nodes present"
+    ],
+    "negative": [
+     "No lymphadenopathy present",
+     "No enlarged lymph nodes present",
+     "No pathologically enlarged lymph nodes present"
+    ]
+   }
+  },
+  {
+   "key": "arterial_calcification",
+   "label": "Arterial wall calcification",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Arterial wall calcification present"
+    ],
+    "negative": [
+     "No arterial wall calcification present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Arterial wall calcification present",
+     "There is arterial wall calcification.",
+     "Arterial wall calcification is observed.",
+     "Findings consistent with arterial wall calcification."
+    ],
+    "negative": [
+     "No arterial wall calcification present",
+     "There is no arterial wall calcification.",
+     "No arterial wall calcification is observed.",
+     "No findings consistent with arterial wall calcification."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Arterial wall calcification present",
+     "Aortic wall calcification present",
+     "Atherosclerotic calcification present"
+    ],
+    "negative": [
+     "No arterial wall calcification present",
+     "No aortic wall calcification present",
+     "No atherosclerotic calcification present"
+    ]
+   }
+  },
+  {
+   "key": "coronary_calcification",
+   "label": "Coronary artery wall calcification",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Coronary artery wall calcification present"
+    ],
+    "negative": [
+     "No coronary artery wall calcification present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Coronary artery wall calcification present",
+     "There is coronary artery wall calcification.",
+     "Coronary artery wall calcification is observed.",
+     "Findings consistent with coronary artery wall calcification."
+    ],
+    "negative": [
+     "No coronary artery wall calcification present",
+     "There is no coronary artery wall calcification.",
+     "No coronary artery wall calcification is observed.",
+     "No findings consistent with coronary artery wall calcification."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Coronary artery wall calcification present",
+     "Coronary artery calcification present",
+     "Calcified coronary arteries present"
+    ],
+    "negative": [
+     "No coronary artery wall calcification present",
+     "No coronary artery calcification present",
+     "No calcified coronary arteries present"
+    ]
+   }
+  },
+  {
+   "key": "hiatal_hernia",
+   "label": "Hiatal hernia",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Hiatal hernia present"
+    ],
+    "negative": [
+     "No hiatal hernia present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Hiatal hernia present",
+     "There is a hiatal hernia.",
+     "A hiatal hernia is observed.",
+     "Findings consistent with hiatal hernia."
+    ],
+    "negative": [
+     "No hiatal hernia present",
+     "There is no hiatal hernia.",
+     "No hiatal hernia is observed.",
+     "No findings consistent with hiatal hernia."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Hiatal hernia present",
+     "Hiatus hernia present",
+     "Sliding hiatal hernia present"
+    ],
+    "negative": [
+     "No hiatal hernia present",
+     "No hiatus hernia present",
+     "No sliding hiatal hernia present"
+    ]
+   }
+  },
+  {
+   "key": "medical_material",
+   "label": "Medical material",
+   "ct_rate_label": true,
+   "A": {
+    "positive": [
+     "Medical material present"
+    ],
+    "negative": [
+     "No medical material present"
+    ]
+   },
+   "B": {
+    "positive": [
+     "Medical material present",
+     "There is medical material.",
+     "Medical material is observed.",
+     "Findings consistent with medical material."
+    ],
+    "negative": [
+     "No medical material present",
+     "There is no medical material.",
+     "No medical material is observed.",
+     "No findings consistent with medical material."
+    ]
+   },
+   "C": {
+    "positive": [
+     "Medical material present",
+     "Medical devices present",
+     "Surgical material present",
+     "Catheter, pacemaker or surgical clips present"
+    ],
+    "negative": [
+     "No medical material present",
+     "No medical devices present",
+     "No surgical material present",
+     "No catheter, pacemaker or surgical clips present"
+    ]
+   }
+  }
+ ]
+}

@@ -1,0 +1,171 @@
+{
+  "config_version": "audit_review_protocol_v0_1_draft",
+  "status": "DRAFT - not frozen. Freeze (new version, date, hash) only after the reader usability trial on development cases, and before any fresh evaluation case is opened. Supersedes audit_review_protocol_v0_draft (kept unchanged).",
+  "drafted": "2026-11-22",
+  "project_statement": [
+    "We test whether a set of automatic post-generation checks (side, lobe, empty mask, contradictory outputs, and, as an exploratory component, attenuation) can identify errors in the finding-mask pairs emitted by a grounded CT foundation model.",
+    "Checks use separately computed anatomical segmentation and CT attenuation.",
+    "Blinded clinician adjudication of flagged and unflagged findings establishes whether flags correspond to actual errors and how many errors among generated findings are missed.",
+    "The primary evaluation concerns errors within generated finding-mask pairs; it does not establish completeness of abnormality detection, and passing the audit does not establish clinical correctness.",
+    "Our focused search did not identify this exact combination; a documented literature comparison is still required."
+  ],
+  "model_under_test": {
+    "name": "HoloCT-4B",
+    "code_commit": "0d3b0a12f5ab0083dbeb81a60c49535404517305",
+    "prompts": "configs/holoct_ct_questions_v1.json",
+    "provenance_note": "Our CT-RATE validation patients appear in HoloCT's published test split lists and not in its train lists. This is provenance evidence only; it does not establish absence of exposure through other training sources."
+  },
+  "checks": {
+    "primary": {
+      "empty_mask": "finding named, mask has zero voxels",
+      "side": "side stated in the text (left / right / bilateral) vs share of the mask in left and right lung (TotalSegmentator lobes)",
+      "lobe": "lobe stated in the text vs lobe holding the largest share of the mask",
+      "contradictory_output": "a negated statement that has a non-empty outline, or a 'No' to every fixed-condition question mapped to a finding type that the model's own findings list states"
+    },
+    "exploratory": {
+      "attenuation": "Descriptive statistics only (median, 10th/90th percentile, share of voxels per HU band) are stored with each verdict. No attenuation rule is active (decided 2026-11-20)."
+    },
+    "to_fix_before_freezing": [
+      "confirm or change the provisional thresholds above",
+      "review parser rules against statements from development cases only",
+      "decide whether a scan-level 'answered Yes, no finding states it' count is reported"
+    ],
+    "meaning_of_pass": "No tested inconsistency was found. A wrong mask can lie in the named lobe and have plausible attenuation.",
+    "location_rules": "Outline voxels count for the lobe they lie in, or the nearest lobe within 20 mm (pleural findings). Side and lobe checks are 'not applicable' for negated statements, several findings in one statement, side comparisons, and outlines less than half assignable to a lobe. Uncertain wording is recorded but does not switch the checks off.",
+    "implementation": {
+      "parser": "src/lung_ct/audit/parse.py (audit_parser_v0_draft)",
+      "checks": "src/lung_ct/audit/checks.py (audit_checks_v0_draft)",
+      "tests": "tests/test_audit.py",
+      "thresholds_provisional": {
+        "side_min_share": 0.5,
+        "bilateral_min_share": 0.05,
+        "lobe_min_share": 0.5,
+        "min_assigned_share": 0.5,
+        "nearest_lobe_max_mm": 20
+      },
+      "note_2026_11_22": "Unchanged by v0_1."
+    }
+  },
+  "grading_form": {
+    "unit": "one generated finding with its mask",
+    "choices_multi_select": [
+      "text error",
+      "finding-mask error",
+      "anatomical-mask error"
+    ],
+    "choices_exclusive": [
+      "no identified error",
+      "cannot adjudicate"
+    ],
+    "rule": "The three error types can be combined. 'no identified error' and 'cannot adjudicate' exclude every other choice.",
+    "extra_fields": {
+      "anatomy_assessed": "yes / no - 'no' is stored as not reviewed and never counted as correct",
+      "comment": "free text",
+      "reader_id": "required",
+      "seconds_spent": "recorded automatically"
+    },
+    "stage1_fields_v2": {
+      "finding": "present / not_present / cannot_tell - required to lock",
+      "location": "stated (list of RUL, RML, RLL, LUL, LLL) / not_in_a_lobe / indeterminate / not_assessed (default)",
+      "rule": "Finding identity and location are separate fields. A text error about the place does not replace the reader's own location.",
+      "locked_with": "the initial assessment, before lobe outlines are shown"
+    }
+  },
+  "blinding": {
+    "hidden_from_reader": [
+      "audit flags",
+      "lung_ct checklist answers and measurements",
+      "agreement group",
+      "sampling stratum",
+      "CT-RATE labels and report text"
+    ],
+    "shown_to_reader": [
+      "CT",
+      "HoloCT statement",
+      "HoloCT finding mask"
+    ],
+    "sequence": [
+      "1. Reader reviews CT, statement and finding mask.",
+      "2. Reader saves the initial assessment (error types or no identified error / cannot adjudicate), whether the finding is there, and the reader's own location. All of it is stored and locked.",
+      "3. TotalSegmentator lobe boundaries are revealed; reader assesses anatomical-mask error. Both stages are kept in the export."
+    ],
+    "report_text": "Original radiology reports stay hidden at every stage (decided 2026-11-20).",
+    "extra_rule": "Lobe boundaries can be revealed only when every finding of the scan has a locked initial assessment; an optional revised assessment is stored next to the locked one."
+  },
+  "sampling": {
+    "inventory": "Every generated finding of every evaluation scan is written to a finding inventory before grading (scan, finding index, text, mask file hash, flags).",
+    "design": "All flagged findings, plus a simple random sample of unflagged findings.",
+    "manifest_fields": [
+      "finding_id",
+      "patient_id",
+      "stratum (flagged / unflagged)",
+      "inclusion_probability",
+      "sampling_seed",
+      "selected"
+    ],
+    "manifest_is_written": "before grading starts, with a file hash recorded in the run manifest",
+    "estimates": "Design-weighted (inverse inclusion probability). Intervals by resampling patients, repeating the within-stratum weighting in each resample.",
+    "scope_limit": "Estimates errors missed by the checker among generated findings. Abnormalities the model never mentioned need a separate scan-level reference review."
+  },
+  "selective_reporting": {
+    "hypothesis": "Withholding flagged findings lowers the error rate among retained findings.",
+    "report": "Error rate vs share of findings retained, including correct findings that were withheld.",
+    "agreement_groups": "Groups (measurement and model agree / model only / measurement only / conflict) are hypotheses; their error rates are measured, not assumed."
+  },
+  "reproducibility_and_reconstruction": {
+    "same_input_same_settings": "Repeat a small number of scans in separate processes; report exact-match rate of answers, text and masks.",
+    "generation_variability": "Sampled findings re-run with different seeds.",
+    "reconstruction_effect": "Paired reconstructions with matched seeds; compared against the two baselines above.",
+    "pair_eligibility": "Record per pair what differs (kernel, matrix, in-plane spacing, slice thickness, coverage). Report 'kernel only' pairs separately from pairs where the voxel grid also changes.",
+    "interpretation": "A flip shows instability. Which answer is wrong, if either, is decided by clinician assessment.",
+    "answer_comparison": "Fixed-condition Yes/No answers are compared condition by condition (same / flip / not comparable), separately from any geometry.",
+    "finding_matching_PROVISIONAL": "Geometric only: two outlines link if Dice >= 0.1, or their centroids are within 30 mm. Outcomes: matched, split, merge, ambiguous (many-to-many, or a centroid-only link between different finding types), unmatched (appeared / disappeared). Empty outlines never link. Thresholds provisional. Code: src/lung_ct/audit/matching.py."
+  },
+  "development_checks_done_2026_11_20": {
+    "same_settings_repeat": "valid_301_a_2 run twice in separate processes: 18 yes/no answers, findings text and all 4 masks identical (1 scan only).",
+    "paired_reconstructions_test20_vs_test20_soft": "15 pairs. 4 Siemens pairs (Bl56f vs Br40f) share matrix, spacing and slice thickness: kernel-only. 11 Philips pairs (YA vs B) also change matrix 1024->512, in-plane spacing x2 and slice thickness 1.5->0.75 mm; coverage and origin match. Labels and technique text identical in all 15."
+  },
+  "before_freezing": [
+    "reader usability trial on the four meeting cases; resolve the issues it raises",
+    "open items under checks.to_fix_before_freezing resolved",
+    "finding-matching thresholds confirmed",
+    "evaluation scans chosen by seed from scans not in any seen set; none opened before the freeze"
+  ],
+  "records": {
+    "finding": "audit_finding_v1 in runs/A2_audit_inventory_*/inventory.json (the only record the blinded viewer loads)",
+    "verdict": "audit_verdict_v1 in runs/A3_audit_verdicts_*/verdicts.json (never loaded by the viewer)",
+    "sampling": "runs/A4_audit_sampling_*/manifest.json (analysis only) and selection.json (ids only, for the viewer)",
+    "review": "audit_review_v2 (audit_review_v1 still readable), exported by the viewer as JSON and CSV",
+    "schema_code": "src/lung_ct/audit/schema.py",
+    "checklist_grades": "grades_v2 CSV from the location-first checklist viewer; grades_v1 CSVs in runs/grades_received/ are kept unchanged"
+  },
+  "usability_trial": "The four meeting cases only (valid_301_a_2, valid_541_a_2, valid_832_a_2, valid_988_a_2). Pages: runs/A2_audit_inventory_usability_*/review_<case>.html. Their results are not evaluation data.",
+  "changes_from_v0_draft": [
+    "Grading form, stage 1: two fields added, each separate from the error types and from each other: 'finding' (finding is there / is not there / cannot tell; required) and 'location' (one or more lobes, or 'not in a lung lobe', 'indeterminate', or 'not assessed' = the explicit default). Both are saved and locked with the initial assessment, before the lobe outlines are revealed.",
+    "Records: review record is audit_review_v2. audit_review_v1 records remain readable; their location is read as 'not_recorded_form_v1' and is never counted as assessed. No v1 review has been collected from a reader.",
+    "Location wording rule: lobe names are used only where the TotalSegmentator lobe outlines support them; geometric subdivisions are not called anatomical segments; uncertain lobe assignment is flagged.",
+    "Checklist grading (separate from the finding-mask audit) gets its own staged form: see checklist_staged_review.",
+    "No change to the automatic checks, their thresholds, the sampling design or the blinding list."
+  ],
+  "checklist_staged_review": {
+    "what": "Staged grading of the lung_ct condition checklist (not the HoloCT finding-mask audit). Page: build_viewer_page.py --viewer v2 --blinded.",
+    "form": "grades_v2 (scripts/viewer_grading_v2.py); viewer checklist_viewer_v2_location_first",
+    "sequence": [
+      "1. Reader sees the CT and the list of conditions only. For each condition: present / absent / can't tell, and for lung conditions the lobes (or indeterminate, or not assessed = default); pleural effusion by side.",
+      "2. 'Save and lock step 1' needs a name and an answer for every condition. The locked answers are stored unchanged.",
+      "3. The tool's answers, proposed locations, measurement panel and outlines are shown. Any later change is stored next to the locked answer with a timestamp; the export has both."
+    ],
+    "hidden_in_step_1": [
+      "tool answers",
+      "tool location statements",
+      "measurements",
+      "overlays",
+      "agreement tags"
+    ],
+    "never_in_staged_pages": [
+      "CT-RATE labels and report text"
+    ],
+    "limits": "The hidden content is inside the HTML file: this is a reading procedure, not a security barrier. Grades collected with form grades_v1 are kept as they are; their location is 'not_recorded_form_v1'.",
+    "status": "Draft. Not used with a reader yet."
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "config_version": "colipri_ct_v1",
+  "frozen": false,
+  "note": "Zero-shot classification with COLIPRI (Microsoft, MIT licence, research use). One prompt pair per finding ('No X present' / 'X present', the phrasing of the model card example); probability = softmax over the pair. Scores are UNCALIBRATED and not validated on this project's data. revision fields stay null until the downloaded code has been reviewed; agent_classify.py refuses unpinned revisions.",
+  "package": "colipri==0.1.3",
+  "model": {
+    "repo_id": "microsoft/colipri",
+    "revision": "892e42ec363f6c561b89c459d60fcd95ac1a99bf",
+    "filename": "model.safetensors",
+    "license": "MIT"
+  },
+  "tokenizer": {
+    "repo_id": "microsoft/BiomedVLP-CXR-BERT-specialized",
+    "revision": "5157bdba1437a3aed316dacb1a5b68edf96b9902",
+    "trust_remote_code": true,
+    "reviewed": true,
+    "review_note": "2026-11-15: snapshot 5157bdb configuration_cxrbert.py (27 lines) and modeling_cxrbert.py (145 lines) reviewed - imports only transformers/torch/dataclasses/typing; no network, subprocess, eval/exec or file I/O. colipri==0.1.3 package source reviewed: downloads only microsoft/colipri model.safetensors via hf_hub_download; text backbone = AutoModel.from_pretrained of this repo at the pinned revision (weights then overwritten by the COLIPRI checkpoint)."
+  },
+  "preprocessing": "package default: reorient RAS, resample 2 mm, clamp -1000..1000 HU, rescale to -1..1, crop/pad 192^3",
+  "high_threshold": 0.7,
+  "low_threshold": 0.3,
+  "threshold_note": "Used only to flag reader/classifier disagreements for review; arbitrary, not calibrated.",
+  "reliability": "uncalibrated zero-shot score - COLIPRI; third-party external test AUROC about 0.77 (RAD-ChestCT, 18-finding mean); not validated on this project's data",
+  "findings": [
+    {
+      "key": "lung_opacity",
+      "label": "Lung opacity",
+      "negative": "No lung opacities present",
+      "positive": "Lung opacities present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "consolidation",
+      "label": "Consolidation",
+      "negative": "No consolidation present",
+      "positive": "Consolidation present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "ground_glass",
+      "label": "Ground-glass opacity",
+      "negative": "No ground-glass opacities present",
+      "positive": "Ground-glass opacities present",
+      "ct_rate_label": false
+    },
+    {
+      "key": "atelectasis",
+      "label": "Atelectasis",
+      "negative": "No atelectasis present",
+      "positive": "Atelectasis present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "lung_nodule",
+      "label": "Lung nodule",
+      "negative": "No lung nodules present",
+      "positive": "Lung nodules present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "emphysema",
+      "label": "Emphysema",
+      "negative": "No emphysema present",
+      "positive": "Emphysema present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "bronchiectasis",
+      "label": "Bronchiectasis",
+      "negative": "No bronchiectasis present",
+      "positive": "Bronchiectasis present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "septal_thickening",
+      "label": "Interlobular septal thickening",
+      "negative": "No interlobular septal thickening present",
+      "positive": "Interlobular septal thickening present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "peribronchial_thickening",
+      "label": "Peribronchial thickening",
+      "negative": "No peribronchial thickening present",
+      "positive": "Peribronchial thickening present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "mosaic_attenuation",
+      "label": "Mosaic attenuation pattern",
+      "negative": "No mosaic attenuation pattern present",
+      "positive": "Mosaic attenuation pattern present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "fibrotic_sequela",
+      "label": "Pulmonary fibrotic sequela",
+      "negative": "No pulmonary fibrotic sequelae present",
+      "positive": "Pulmonary fibrotic sequelae present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "pleural_effusion",
+      "label": "Pleural effusion",
+      "negative": "No pleural effusion present",
+      "positive": "Pleural effusion present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "pericardial_effusion",
+      "label": "Pericardial effusion",
+      "negative": "No pericardial effusion present",
+      "positive": "Pericardial effusion present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "cardiomegaly",
+      "label": "Cardiomegaly",
+      "negative": "No cardiomegaly present",
+      "positive": "Cardiomegaly present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "lymphadenopathy",
+      "label": "Lymphadenopathy",
+      "negative": "No lymphadenopathy present",
+      "positive": "Lymphadenopathy present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "arterial_calcification",
+      "label": "Arterial wall calcification",
+      "negative": "No arterial wall calcification present",
+      "positive": "Arterial wall calcification present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "coronary_calcification",
+      "label": "Coronary artery wall calcification",
+      "negative": "No coronary artery wall calcification present",
+      "positive": "Coronary artery wall calcification present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "hiatal_hernia",
+      "label": "Hiatal hernia",
+      "negative": "No hiatal hernia present",
+      "positive": "Hiatal hernia present",
+      "ct_rate_label": true
+    },
+    {
+      "key": "medical_material",
+      "label": "Medical material",
+      "negative": "No medical material present",
+      "positive": "Medical material present",
+      "ct_rate_label": true
+    }
+  ]
+}

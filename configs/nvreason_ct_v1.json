@@ -1,0 +1,73 @@
+{
+  "config_version": "nvreason_ct_v1",
+  "frozen": false,
+  "note": "NV-Reason-CT as a third AI reader (shown only, never counted by the checklist). Unlike MedGemma and Hulu-Med, this model reads the scan file itself as one 3D block, so it is asked in its own documented way: one structured report and one yes/no question per condition. The checklist-shaped answer file is ASSEMBLED by our code from those yes/no answers; the model never writes JSON.",
+  "model": {
+    "model_id": "nvidia/NV-Reason-CT",
+    "revision": "386b93e034983f6c1fc841a43833a1b6a0cd9c13",
+    "license": "OpenMDW-1.1 (model card and code repository LICENSE, read 2026-11-25)",
+    "code_repository": "github.com/NVIDIA-Medtech/NV-Reason-CT @ b4abd354fef90819ec40dd637c3bd14521b8023c (inference.py used as the usage reference)",
+    "trust_remote_code": true,
+    "dtype": "bfloat16",
+    "device": "cuda:0",
+    "attn_implementation": "sdpa",
+    "quantization": null,
+    "vendor_supported_os": "Linux only (model card); run here on Windows 11",
+    "training_data_note": "trained on CT-RATE train_fixed (code repository datalists); CT-RATE validation scans are not listed as training data, but they come from the same hospital",
+    "remote_code_review": "2026-11-25: snapshot 386b93e model.py (250 lines) and processor.py (624 lines) read in full - imports only torch, transformers, monai, scipy, numpy, dynamic_network_architectures; no network, subprocess, eval/exec; file writes only inside save_pretrained (never called here)."
+  },
+  "representation": {
+    "name": "nvreason_native_3d",
+    "built_by": "the model's own processor (processor.py ImageLoader3D), not lung_ct.vlm.ct_representation",
+    "steps": "load NIfTI with MONAI (header slope/intercept applied) -> reorient to LPS from the affine -> resample to 2 mm isotropic, bilinear -> pad with -1000 HU to at least 192 voxels -> crop 192 x 192 x 192 (384 mm): centred in-plane, centred on the detected lungs head-to-foot -> clip to -1000..1000 HU and divide by 1000",
+    "anatomy_region": "chest",
+    "normalize_mode": "ct",
+    "visual_tokens": 13824,
+    "note": "Left / right comes from the file's affine. Only scans whose left / right was verified from anatomy in the QC run are eligible. Anything outside the 384 mm cube is not seen by the model; the amount cut away is recorded per case."
+  },
+  "report": {
+    "prompt": "write a structured chest CT report",
+    "enable_thinking": true,
+    "max_new_tokens": 2048
+  },
+  "questions": {
+    "presence_template": "Is {phrase} present in this CT? Answer only Yes or No.",
+    "side_template": "Which side is affected by {phrase}: right, left or both? Answer only Right, Left or Both.",
+    "side_note": "The presence wording is the model card's own example. The side wording is ours (the model card gives no side example); it is asked only when the answer was Yes and the condition has a side.",
+    "enable_thinking": false,
+    "max_new_tokens": 16,
+    "conditions": [
+      {"key": "ground_glass", "phrase": "ground-glass opacity", "model_label": null, "side": true},
+      {"key": "consolidation", "phrase": "consolidation", "model_label": "Consolidation", "side": true},
+      {"key": "atelectasis", "phrase": "atelectasis", "model_label": "Atelectasis", "side": true},
+      {"key": "lung_nodule", "phrase": "a lung nodule", "model_label": "Lung nodule", "side": true},
+      {"key": "emphysema", "phrase": "emphysema", "model_label": "Emphysema", "side": true},
+      {"key": "bronchiectasis", "phrase": "bronchiectasis", "model_label": "Bronchiectasis", "side": true},
+      {"key": "peribronchial_thickening", "phrase": "peribronchial thickening", "model_label": "Peribronchial thickening", "side": true},
+      {"key": "interlobular_septal_thickening", "phrase": "interlobular septal thickening", "model_label": "Interlobular septal thickening", "side": true},
+      {"key": "mosaic_attenuation", "phrase": "a mosaic attenuation pattern", "model_label": "Mosaic attenuation pattern", "side": true},
+      {"key": "fibrotic_sequela", "phrase": "pulmonary fibrotic sequela", "model_label": "Pulmonary fibrotic sequela", "side": true},
+      {"key": "pleural_effusion", "phrase": "a pleural effusion", "model_label": "Pleural effusion", "side": true},
+      {"key": "pericardial_effusion", "phrase": "a pericardial effusion", "model_label": "Pericardial effusion", "side": false},
+      {"key": "cardiomegaly", "phrase": "cardiomegaly", "model_label": "Cardiomegaly", "side": false},
+      {"key": "arterial_calcification", "phrase": "arterial wall calcification", "model_label": "Arterial wall calcification", "side": false},
+      {"key": "coronary_calcification", "phrase": "coronary artery wall calcification", "model_label": "Coronary artery wall calcification", "side": false},
+      {"key": "lymphadenopathy", "phrase": "lymphadenopathy", "model_label": "Lymphadenopathy", "side": false},
+      {"key": "hiatal_hernia", "phrase": "a hiatal hernia", "model_label": "Hiatal hernia", "side": false},
+      {"key": "medical_material", "phrase": "medical material", "model_label": "Medical material", "side": false}
+    ]
+  },
+  "prompt": {
+    "version": "nvreason_native_v1",
+    "schema": "checklist_v1",
+    "note": "schema of the assembled answer file only"
+  },
+  "generation": {
+    "do_sample": false,
+    "batch_size": 1
+  },
+  "assembled_answer": {
+    "status": "Yes -> present, No -> absent. Any other answer is a recorded failure for the case; nothing is guessed. The model is never offered 'cannot tell'.",
+    "assessability": "not asked of the model; written as 'assessable' and stated under limitations"
+  }
+}

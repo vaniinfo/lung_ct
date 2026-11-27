@@ -1,0 +1,60 @@
+{
+  "rules_version": "reference_answer_rules_v2",
+  "status": "PROVISIONAL - definitions pending clinician/professor approval. v2 changes ONLY the cranio-caudal zones (equal-volume instead of equal-height thirds); everything else is identical to v1.",
+  "reference_source": "COVID-19-CT-Seg expert lung and infection masks (data/raw/covid_ct). The infection annotation is not guaranteed exhaustive; disagreement is a review signal, not a confirmed model error.",
+  "opacity_presence": {
+    "min_infection_ml_inside_lung": 0.1,
+    "note": "present if expert infection volume inside the lungs >= this value, else absent"
+  },
+  "laterality": {
+    "unilateral_fraction_threshold": 0.05,
+    "note": "same threshold as configs/review_flag_rules_v1.json: bilateral if the smaller side holds >= 5% of infection volume, else the larger side"
+  },
+  "craniocaudal": {
+    "zone_method": "equal_volume",
+    "zones": "lung voxels (both lungs) split along world z (RAS) at the 1/3 and 2/3 volume quantiles, so upper, middle and lower zones each hold one third of the lung volume",
+    "predominance_min_share": 0.5,
+    "note": "<zone>_predominant if one zone holds >= 50% of infection volume (expected share with no predominance: 33%), else no_predominance. Replaces v1 equal-height thirds, which over-call middle_predominant because the middle third of the height holds the most lung."
+  },
+  "axial": {
+    "peripheral_depth_fraction": 0.3333,
+    "peripheral_if_share_at_least": 0.7,
+    "central_if_share_at_most": 0.3,
+    "note": "depth = Euclidean distance (mm) to the edge of the same lung, divided by that lung's maximum depth. Peripheral zone = depth fraction <= 1/3. Known limitation: the lung edge includes the mediastinal surface, so disease next to the mediastinum counts as peripheral."
+  },
+  "ct_severity_score": {
+    "bins_pct": [
+      [
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        5,
+        1
+      ],
+      [
+        5,
+        25,
+        2
+      ],
+      [
+        25,
+        50,
+        3
+      ],
+      [
+        50,
+        75,
+        4
+      ],
+      [
+        75,
+        100,
+        5
+      ]
+    ],
+    "note": "per-lobe score 0-5 from percent of lobe involved (0 = none, 1 <5%, 2 5-25%, 3 25-50%, 4 50-75%, 5 >75%); total 0-25. Lobes are TotalSegmentator PREDICTIONS, so this is a near-reference. Not yet scored against model output (current prompt schema has no severity field)."
+  }
+}

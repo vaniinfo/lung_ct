@@ -1,0 +1,271 @@
+{
+  "config_version": "checklist_v3_1",
+  "frozen_utc": "2026-11-18",
+  "status": "PROVISIONAL - v3 plus one rule found on test20b (2026-11-18). Judge it on test20c (new patients).",
+  "statuses": [
+    "present",
+    "absent",
+    "cannot tell",
+    "cannot assess"
+  ],
+  "decision_rule": [
+    "1. If the condition needs contrast and the scan is not a contrast scan: 'cannot assess'.",
+    "2. If a measurement exists and its value is outside the grey zone, the measurement decides (basis 'measured'). The classifier and AI readers are flagged for the reviewer when they disagree; they do not overrule.",
+    "2b. Image quality gates: a measurement over its noise limit is 'not measured'; with poorly inflated lungs emphysema cannot be 'absent'; ground-glass and enlarged heart cannot be 'present'.",
+    "3. Without a decisive measurement, 'absent' needs the classifier <= low threshold (basis 'classifier only, uncalibrated').",
+    "4. Everything else: 'cannot tell'. AI readers are shown but do not vote (readers_vote = false); the classifier alone never makes a condition 'present'."
+  ],
+  "banned_terms": [
+    "opacity",
+    "opacities",
+    "opacification"
+  ],
+  "banned_terms_note": "The clinician reviewer (2026-11-15): radiologist reviewers will not accept the generic word. Use ground-glass, consolidation, or 'increased lung density, type not determined'.",
+  "measurements": {
+    "contrast_aorta_hu": {
+      "non_contrast_below": 100,
+      "contrast_above": 150,
+      "note": "median HU of the eroded TotalSegmentator aorta; unenhanced blood is about 30-60 HU"
+    },
+    "dependent_band_fraction": 0.2,
+    "dependent_band_note": "Per axial slice and lung, the most posterior 20% of the lung's front-to-back extent is 'dependent' (gravity-related density in a supine patient). Density there is reported but not used to call ground-glass or consolidation.",
+    "ground_glass_hu": [
+      -700,
+      -300
+    ],
+    "consolidation_hu": [
+      -300,
+      100
+    ],
+    "density_lung_erosion_voxels": 2,
+    "density_exclude": [
+      "lung_vessels/lung_arteries",
+      "lung_vessels/lung_veins",
+      "lung_vessels/lung_airways",
+      "lung_vessels/lung_airways_wall"
+    ],
+    "density_exclude_dilation_voxels": 1,
+    "density_opening_voxels": 1,
+    "aortic_calcium_hu": 130,
+    "aortic_calcium_min_component_voxels": 3,
+    "aortic_calcium_mask_dilation_voxels": 1,
+    "aortic_calcium_min_peak_hu": 300,
+    "aortic_calcium_note": "Added 2026-11-17 after the first CT-RATE run (valid_5): with 1 mm slices, blood noise forms small clusters just above 130 HU. A calcium spot must now also contain at least one voxel >= 300 HU. Measurement fix, not a threshold change.",
+    "effusion_adjacent_mm": 15,
+    "lung_inflation": {
+      "median_hu_above": -780,
+      "volume_ml_below": 3000,
+      "note": "Well-inflated lungs at full inspiration usually have a median of about -820 to -870 HU and 4-7 litres; pilot case valid_827 (emphysema missed) had -746 HU and 2.5 L."
+    },
+    "emphysema_hu": -950,
+    "laa_cluster_min_voxels": 10
+  },
+  "conditions": [
+    {
+      "key": "ground_glass",
+      "label": "Ground-glass",
+      "ct_rate_label": null,
+      "measured_by": "non-dependent lung with HU -700 to -300, % of lung",
+      "present_at_least": 3.0,
+      "absent_below": 1.0,
+      "unit": "% of lung",
+      "classifier_key": "ground_glass",
+      "lung_location": true,
+      "note": "Partial volume around vessels and motion also fall in this band; type separation by HU alone is approximate.",
+      "poor_inflation": "no_present"
+    },
+    {
+      "key": "consolidation",
+      "label": "Consolidation",
+      "ct_rate_label": "Consolidation",
+      "measured_by": "non-dependent lung with HU -300 to 100, mL",
+      "present_at_least": 30,
+      "absent_below": 5,
+      "unit": "mL",
+      "classifier_key": "consolidation",
+      "lung_location": true
+    },
+    {
+      "key": "lung_density",
+      "label": "Increased lung density (ground-glass or consolidation)",
+      "ct_rate_label": "Lung opacity",
+      "measured_by": "ground_glass OR consolidation (non-dependent)",
+      "classifier_key": "lung_opacity",
+      "lung_location": true
+    },
+    {
+      "key": "atelectasis",
+      "label": "Atelectasis",
+      "ct_rate_label": "Atelectasis",
+      "classifier_key": "atelectasis",
+      "note": "Only collapse next to fluid is measured; other atelectasis relies on the classifier (absent only).",
+      "measured_by": "dense lung within 15 mm of a pleural effusion (E88), mL",
+      "present_at_least": 30,
+      "absent_below": null,
+      "unit": "mL"
+    },
+    {
+      "key": "lung_nodule",
+      "label": "Lung nodule",
+      "ct_rate_label": "Lung nodule",
+      "classifier_key": "lung_nodule",
+      "note": "No nodule detector in the pipeline yet."
+    },
+    {
+      "key": "emphysema",
+      "label": "Emphysema",
+      "ct_rate_label": "Emphysema",
+      "measured_by": "LAA-950 on lung minus airways (E31), % of lung",
+      "present_at_least": 6.0,
+      "absent_below": null,
+      "unit": "% of lung",
+      "classifier_key": "emphysema",
+      "note": "Present only when clearly high (>= 6%). Mild emphysema often gives a low value, so a low value means 'cannot tell', not 'absent'.",
+      "allow_classifier_absent": false,
+      "poor_inflation": "no_absent"
+    },
+    {
+      "key": "bronchiectasis",
+      "label": "Bronchiectasis",
+      "ct_rate_label": "Bronchiectasis",
+      "classifier_key": "bronchiectasis",
+      "note": "Airway-tree measurements are not yet validated as bronchiectasis evidence (planned: airway-to-artery ratio)."
+    },
+    {
+      "key": "peribronchial_thickening",
+      "label": "Peribronchial thickening",
+      "ct_rate_label": "Peribronchial thickening",
+      "classifier_key": "peribronchial_thickening"
+    },
+    {
+      "key": "interlobular_septal_thickening",
+      "label": "Interlobular septal thickening",
+      "ct_rate_label": "Interlobular septal thickening",
+      "classifier_key": "septal_thickening"
+    },
+    {
+      "key": "mosaic_attenuation",
+      "label": "Mosaic attenuation",
+      "ct_rate_label": "Mosaic attenuation pattern",
+      "classifier_key": "mosaic_attenuation"
+    },
+    {
+      "key": "fibrotic_sequela",
+      "label": "Fibrotic (scarring) changes",
+      "ct_rate_label": "Pulmonary fibrotic sequela",
+      "classifier_key": "fibrotic_sequela"
+    },
+    {
+      "key": "pleural_effusion",
+      "label": "Pleural effusion",
+      "ct_rate_label": "Pleural effusion",
+      "measured_by": "TotalSegmentator pleural effusion mask, mL (both sides)",
+      "present_at_least": 20,
+      "absent_below": 5,
+      "unit": "mL",
+      "classifier_key": "pleural_effusion"
+    },
+    {
+      "key": "pericardial_effusion",
+      "label": "Pericardial effusion",
+      "ct_rate_label": "Pericardial effusion",
+      "measured_by": "TotalSegmentator pericardial effusion mask, mL",
+      "present_at_least": 50,
+      "absent_below": 20,
+      "unit": "mL",
+      "classifier_key": "pericardial_effusion",
+      "note": "Up to about 50 mL of pericardial fluid is normal."
+    },
+    {
+      "key": "cardiomegaly",
+      "label": "Cardiomegaly (enlarged heart)",
+      "ct_rate_label": "Cardiomegaly",
+      "measured_by": "axial cardiothoracic ratio = widest heart / widest inner chest (lungs)",
+      "present_at_least": 0.55,
+      "absent_below": 0.5,
+      "unit": "ratio",
+      "classifier_key": "cardiomegaly",
+      "note": "Axial CT ratio, not the chest X-ray ratio; 0.50-0.55 is a grey zone.",
+      "poor_inflation": "no_present"
+    },
+    {
+      "key": "arterial_calcification",
+      "label": "Aortic wall calcification",
+      "ct_rate_label": "Arterial wall calcification",
+      "measured_by": "voxels >= 130 HU in/at the aorta mask (non-contrast only), mL",
+      "present_at_least": 0.1,
+      "absent_below": 0.02,
+      "unit": "mL",
+      "classifier_key": "arterial_calcification",
+      "note": "Only measurable without contrast (contrast-filled blood is also above 130 HU)."
+    },
+    {
+      "key": "coronary_calcification",
+      "label": "Coronary artery calcification",
+      "ct_rate_label": "Coronary artery wall calcification",
+      "classifier_key": "coronary_calcification"
+    },
+    {
+      "key": "lymphadenopathy",
+      "label": "Enlarged lymph nodes",
+      "ct_rate_label": "Lymphadenopathy",
+      "classifier_key": "lymphadenopathy",
+      "contrast_helps": true
+    },
+    {
+      "key": "hiatal_hernia",
+      "label": "Hiatal hernia",
+      "ct_rate_label": "Hiatal hernia",
+      "classifier_key": "hiatal_hernia"
+    },
+    {
+      "key": "medical_material",
+      "label": "Medical material (devices, wires, stents)",
+      "ct_rate_label": "Medical material",
+      "classifier_key": "medical_material"
+    },
+    {
+      "key": "pulmonary_embolism",
+      "label": "Pulmonary embolism",
+      "ct_rate_label": null,
+      "needs_contrast": true,
+      "note": "Needs a contrast CT (CT pulmonary angiogram)."
+    }
+  ],
+  "reliability": {
+    "contrast": "moderate - aorta density threshold; standard physiology, not validated here",
+    "effusion_masks": "moderate - TotalSegmentator pleural/pericardial effusion model (published validation by its authors), not validated on this project's data",
+    "cardiothoracic_ratio": "low-moderate - computed from predicted heart and lung masks; axial CT ratio differs from the chest X-ray ratio; not validated here",
+    "heart_volume": "moderate - TotalSegmentator heart mask; includes pericardium region",
+    "aortic_calcium": "low-moderate - HU threshold at the predicted aorta; nearby bone or contrast can add voxels",
+    "density_type": "low - HU bands inside predicted lungs; separates ground-glass from consolidation only approximately; partial volume and motion add voxels",
+    "dependent_density": "low - context only; gravity-related density at the back of the lungs is usually normal",
+    "noise": "moderate - standard deviation in the predicted aorta; plaques and mask edges add a little",
+    "lung_inflation": "moderate - volume and median density inside predicted lungs; thresholds provisional",
+    "laa_clusters": "low - uncalibrated, report only",
+    "emphysema_laa950": "moderate - standard measure on a standard kernel; insensitive to mild disease; depends on breath-in and reconstruction"
+  },
+  "derived_from": "checklist_v3",
+  "readers_vote": false,
+  "noise": {
+    "mode": "not_measured",
+    "limits_hu": {
+      "emphysema": 45,
+      "calcium": 45,
+      "ground_glass": 45,
+      "consolidation": 60
+    },
+    "note": "Blood SD in the eroded aorta. Standard kernels typically give 20-40 HU."
+  },
+  "changes_from_v2": [
+    "Data: use the standard-kernel reconstruction (Philips B/A, Siemens Br40f...) instead of _a_1 (ctrate_fetch.py --recon soft).",
+    "Noise: no smoothing any more (it erased emphysema holes and added ground-glass). Each HU-threshold measurement is skipped ('not measured', so 'cannot tell') above its own blood-noise limit: emphysema, calcium and ground-glass 45 HU, consolidation 60 HU. On test20 every emphysema extra had noise 31-56 HU.",
+    "Breath-in check (E95 total lung volume, E96 median lung HU): poor inflation if median above -780 HU or volume below 3000 mL. Then emphysema cannot be 'absent' and ground-glass cannot be 'present'.",
+    "Emphysema: measured on lung minus airways (E31). A low value is no longer 'absent' (no absent_below), and the classifier alone cannot make it absent either. Dark-cluster count and LAA per lobe (E32, E33) shown, not used in decisions yet.",
+    "Collapse next to fluid: consolidation-range lung within 15 mm of a pleural effusion is removed from consolidation and reported as E88; atelectasis is 'present' if E88 >= 30 mL.",
+    "Unchanged: all other thresholds, readers shown but not voting."
+  ],
+  "changes_from_v3": [
+    "Enlarged heart: with poorly inflated lungs (E96/E95) the heart-to-chest ratio cannot make it 'present' (a shallow breath narrows the chest, so the ratio rises). 'absent' is still allowed. Found on test20b: both cardiomegaly extras (valid_314, valid_636) were shallow-breath scans."
+  ]
+}

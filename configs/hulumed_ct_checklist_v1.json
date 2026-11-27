@@ -1,0 +1,58 @@
+{
+  "config_version": "hulumed_ct_checklist_v1",
+  "frozen": false,
+  "note": "Hulu-Med comparison model. prompt and generation copied verbatim from configs/medgemma_ct_v1.json (same prompt_sha256). representation differs only in the HU windows (grey lung window). model.revision stays null until the downloaded remote code has been reviewed; run_hulumed.py refuses to load an unpinned revision.",
+  "copied_from": "configs/medgemma_ct_v1.json",
+  "model": {
+    "model_id": "ZJU-AI4H/Hulu-Med-7B",
+    "revision": "258594714a0d3835eb2c9e4cc165a4242e606d71",
+    "license": "Apache-2.0",
+    "trust_remote_code": true,
+    "dtype": "bfloat16",
+    "device_map": "cuda:0",
+    "attn_implementation": "sdpa",
+    "quantization": null,
+    "usage_reference": "remote processing_hulumed.py (rev above) + github.com/ZJUI-AI4H/Hulu-Med README: 3D as a video block, merge_size 2 chosen by the processor",
+    "add_system_prompt": true,
+    "remote_code_review": "2026-11-14: snapshot 2585947 *.py reviewed - imports only transformers/torch/PIL/cv2/decord/ffmpeg/imageio; importlib loads only sibling files in the snapshot; no network, subprocess, eval/exec or file writes. Processor API: __call__(conversation=..., images=[(modal, frames)])."
+  },
+  "representation": {
+    "name": "lung_window_gray",
+    "max_slices": 85,
+    "sampling": "notebook_uniform: index = int(round(i / max_slices * (n - 1))) for i in 1..max_slices when n > max_slices, else all slices",
+    "slice_axis": "axial",
+    "slice_order": "superior_to_inferior",
+    "in_plane_display": "radiological: rows anterior->posterior, columns patient right->left (DICOM LPS pixel convention)",
+    "resample": false,
+    "rgb_windows_hu": [
+      [
+        -1350,
+        150
+      ],
+      [
+        -1350,
+        150
+      ],
+      [
+        -1350,
+        150
+      ]
+    ],
+    "image_format": "jpeg",
+    "jpeg_quality": 75,
+    "slice_label_template": "SLICE {n}",
+    "note": "Same slice sampling, orientation, ordering and JPEG encoding as medgemma_ct_v1; the three channels all use the standard lung window (W1500/L-600 -> -1350..150 HU), i.e. a plain grey image as a radiologist views it, instead of MedGemma's 3-window colour composite."
+  },
+  "prompt": {
+    "version": "checklist_v1",
+    "schema": "checklist_v1",
+    "instruction": "You are analyzing axial slices from a single chest CT examination. The slices are sampled at uniform intervals across the scanned volume and are ordered from superior (head) to inferior (feet). Images are shown in radiological convention: the patient's right is on the image left and anterior is at the top. Please review the slices provided below carefully.",
+    "query": "\n\nBased only on the visual evidence in the slices above, answer a checklist. For EACH condition below say \"present\", \"absent\" or \"cannot_tell\" (use cannot_tell when the slices do not let you decide, for example small findings between sampled slices). For a present finding give the side (\"right\", \"left\", \"both\"); otherwise \"not_applicable\". The patient's right is on the image left. Do not invent measurements. Do not use the word 'opacity'.\n\nConditions:\n- \"ground_glass\" = ground-glass: hazy increased lung density through which vessels are still visible\n- \"consolidation\" = consolidation: lung airspace filled in so that vessels are hidden\n- \"atelectasis\" = atelectasis: collapsed or airless lung (linear, segmental or lobar)\n- \"lung_nodule\" = lung nodule: round focal lesion up to 3 cm\n- \"emphysema\" = emphysema: abnormally dark lung areas with destroyed walls\n- \"bronchiectasis\" = bronchiectasis: airways wider than the artery next to them or not tapering\n- \"peribronchial_thickening\" = peribronchial thickening: thickened airway walls\n- \"interlobular_septal_thickening\" = interlobular septal thickening: fine lines outlining lung lobules\n- \"mosaic_attenuation\" = mosaic attenuation: patchwork of darker and brighter lung regions\n- \"fibrotic_sequela\" = fibrotic (scarring) changes: bands, reticulation, traction, volume loss\n- \"pleural_effusion\" = pleural effusion: fluid between lung and chest wall\n- \"pericardial_effusion\" = pericardial effusion: fluid around the heart\n- \"cardiomegaly\" = cardiomegaly: enlarged heart\n- \"arterial_calcification\" = aortic wall calcification: bright calcium in the aorta wall\n- \"coronary_calcification\" = coronary artery calcification: calcium along the heart's arteries\n- \"lymphadenopathy\" = enlarged lymph nodes in the mediastinum or hila (short axis over 1 cm)\n- \"hiatal_hernia\" = hiatal hernia: stomach pushed up through the diaphragm\n- \"medical_material\" = medical material: devices, wires, stents, tubes or surgical clips\n\nReturn only a JSON object with exactly these keys:\n{\n  \"assessability\": \"assessable\" | \"limited\" | \"not_assessable\",\n  \"conditions\": {\n    \"ground_glass\": {\"status\": \"...\", \"side\": \"...\"},\n    \"consolidation\": {\"status\": \"...\", \"side\": \"...\"},\n    \"atelectasis\": {\"status\": \"...\", \"side\": \"...\"},\n    \"lung_nodule\": {\"status\": \"...\", \"side\": \"...\"},\n    \"emphysema\": {\"status\": \"...\", \"side\": \"...\"},\n    \"bronchiectasis\": {\"status\": \"...\", \"side\": \"...\"},\n    \"peribronchial_thickening\": {\"status\": \"...\", \"side\": \"...\"},\n    \"interlobular_septal_thickening\": {\"status\": \"...\", \"side\": \"...\"},\n    \"mosaic_attenuation\": {\"status\": \"...\", \"side\": \"...\"},\n    \"fibrotic_sequela\": {\"status\": \"...\", \"side\": \"...\"},\n    \"pleural_effusion\": {\"status\": \"...\", \"side\": \"...\"},\n    \"pericardial_effusion\": {\"status\": \"...\", \"side\": \"...\"},\n    \"cardiomegaly\": {\"status\": \"...\", \"side\": \"...\"},\n    \"arterial_calcification\": {\"status\": \"...\", \"side\": \"...\"},\n    \"coronary_calcification\": {\"status\": \"...\", \"side\": \"...\"},\n    \"lymphadenopathy\": {\"status\": \"...\", \"side\": \"...\"},\n    \"hiatal_hernia\": {\"status\": \"...\", \"side\": \"...\"},\n    \"medical_material\": {\"status\": \"...\", \"side\": \"...\"}\n  },\n  \"limitations\": [\"<limitation>\", ...]\n}"
+  },
+  "generation": {
+    "do_sample": false,
+    "max_new_tokens": 2048,
+    "batch_size": 1
+  },
+  "derived_from": "hulumed_ct_v1 (same model, revision and image representation; only the question and token budget change)"
+}
