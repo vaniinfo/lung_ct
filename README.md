@@ -25,24 +25,28 @@ Simplified pipeline · checklist v3_12 · viewer v7. Details: [docs/PIPELINE_FLO
 
 ```mermaid
 flowchart LR
-  subgraph S1["01 INPUT"]
-    A["<b>CT scan + quality checks</b><br/><b>Image values and geometry</b><br/>Validate HU intensity values<br/>Check and correct spacing<br/><b>Anatomical orientation</b><br/>Heart left; liver right<br/>Heart in front; trachea above<br/><b>Only verified scans proceed</b><br/>Failures recorded for review"]
+  subgraph S1 [01 INPUT]
+    A["CT scan + quality checks<br/>Validate HU values, check spacing<br/>Orientation from anatomy:<br/>heart left, liver right,<br/>heart in front, trachea above<br/>Only verified scans go on"]
   end
-  subgraph S2["02 EVIDENCE"]
-    B["<b>TotalSegmentator + measurements</b><br/>Anatomy, fluid and nodule masks<br/>HU-based dense-lung candidates<br/>Volumes and lobe locations"]
-    C["<b>COLIPRI classifier</b><br/>Supporting scores per condition"]
-    D["<b>NV-Reason-CT reader</b><br/>Report and yes / no answers"]
+  subgraph S2 [02 EVIDENCE]
+    B["TotalSegmentator + measurements<br/>Anatomy, fluid and nodule masks<br/>HU-based dense-lung candidates<br/>Volumes and lobe locations"]
+    C["COLIPRI classifier<br/>Supporting score per condition"]
+    D["NV-Reason-CT reader<br/>Report and yes / no answers"]
   end
-  subgraph S3["03 DECISION"]
-    E["<b>Checklist rules</b><br/>Combine available evidence<br/>Apply quality gates<br/>Answer + supporting basis<br/>&quot;Cannot tell&quot; when unresolved"]
+  subgraph S3 [03 DECISION]
+    E["Checklist rules<br/>Combine the evidence<br/>Apply quality gates<br/>Answer + supporting basis<br/>Cannot tell when unresolved"]
   end
-  subgraph S4["04 REVIEW"]
-    F["<b>Review page</b><br/>CT + optional overlays<br/>Answers and reports<br/><b>Clinician grades</b><br/>Export as CSV"]
+  subgraph S4 [04 REVIEW]
+    F["Review page<br/>CT + optional outlines<br/>Answers and reports<br/>Clinician grades, CSV export"]
   end
-  A --> B & C & D
-  B & C & D --> E
+  A --> B
+  A --> C
+  A --> D
+  B --> E
+  C --> E
+  D --> E
   E --> F
-  G["NV-Segment-CT: display only"] -.-> F
+  G["NV-Segment-CT, display only"] -.-> F
   style A fill:#e8f0fb,stroke:#b9cdf5,color:#1f2328
   style B fill:#e8f6ee,stroke:#a9d8b8,color:#1f2328
   style C fill:#eef0fb,stroke:#c3c9f0,color:#1f2328
