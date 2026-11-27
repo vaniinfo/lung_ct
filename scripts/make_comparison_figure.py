@@ -5,7 +5,7 @@ Statuses: Documented / Partial / Not reported / Unverified for published systems
 "Not reported" means the examined sources do not describe it; it does not mean absent.
 
 Writes docs/related_work/comparison_table.md, docs/related_work/source_matrix.md,
-docs/images/related_work_comparison.svg and .png.
+docs/images/capabilities_comparison_2026-11-27.svg and .png.
 Usage: .venv/Scripts/python.exe scripts/make_comparison_figure.py
 """
 from __future__ import annotations
@@ -309,7 +309,7 @@ def main() -> int:
                                              "Not reported does not mean absent.\n\n" + markdown_table(), encoding="utf-8")
     (out / "source_matrix.md").write_text(source_matrix(), encoding="utf-8")
     s, w, h = svg()
-    sp = ROOT / "docs" / "images" / "related_work_comparison.svg"
+    sp = ROOT / "docs" / "images" / "capabilities_comparison_2026-11-27.svg"
     sp.write_text(s, encoding="utf-8")
     sys.path.insert(0, str(ROOT / "scripts"))
     from make_docs_figures import to_png

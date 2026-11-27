@@ -35,7 +35,7 @@ describe it), **Unverified** (insufficient access). For ThoraxCheck: **Implement
 
 ## 2. Table
 
-![Reported capabilities of CT interpretation and evidence-review systems](images/related_work_comparison.png)
+![Reported capabilities of CT interpretation and evidence-review systems](images/capabilities_comparison_2026-11-27.png)
 
 The same table as text, with short labels for Partial cells: [related_work/comparison_table.md](related_work/comparison_table.md).
 

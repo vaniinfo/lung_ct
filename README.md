@@ -47,7 +47,7 @@ Reported capabilities of CT interpretation and evidence-review systems, checked 
 (source review date 2026-11-27). Definitions, per-system notes and a change log: [docs/RELATED_WORK.md](docs/RELATED_WORK.md);
 every cell with its source and location: [docs/related_work/source_matrix.md](docs/related_work/source_matrix.md).
 
-![Reported capabilities of CT interpretation and evidence-review systems](docs/images/related_work_comparison.png)
+![Reported capabilities of CT interpretation and evidence-review systems](docs/images/capabilities_comparison_2026-11-27.png)
 
 **Not reported does not mean absent.** "Implemented" (ThoraxCheck) means present in our code and run records, not validated.
 More implemented features do not make a system more accurate or clinically superior.
