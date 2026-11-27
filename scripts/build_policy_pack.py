@@ -146,7 +146,7 @@ def main() -> int:
                                          "reference_columns": bool(args.reference_columns)}})
     li = "".join(f'<li><a href="{E(p["file"])}"><b>{E(p["case_id"][:-4])}</b></a>' + (f' <span class="muted">earlier review was made on {E(p["earlier_review"]["made_on_policy"])}</span>' if p["earlier_review"] else "") + '</li>'
                  for p in pages)
-    (out / "index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>Lung CT agent - pack {E(args.pack)} ({E(args.checklist)})</title>
+    (out / "index.html").write_text(f"""<!DOCTYPE html><html><head><meta charset="utf-8"><title>ThoraxCheck - pack {E(args.pack)} ({E(args.checklist)})</title>
 <style>
 body{{margin:0;background:#f4f5f7;font:19px/1.55 'Segoe UI',Arial,sans-serif;color:#1f2328}}
 .page{{max-width:900px;margin:0 auto;padding:26px}}

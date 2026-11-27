@@ -1005,3 +1005,17 @@ report left out: the readers' RS01 grades are the reference for any further cond
 **Tested**: unit tests 367 passed (9 new, `tests/test_v3_12.py`).
 
 **Next**: pack M17 (`runs/M17_policy_v3_12_rs01`) with v3_12 for all 46 RS01 scans once pack M16's pipeline has finished; M15 / M16 (v3_11) are kept, not to be sent.
+
+## Public name ThoraxCheck; related-work comparison checked against primary sources (2026-11-27)
+
+**Name**: public-facing name "ThoraxCheck" ("An evidence-based framework for chest CT assessment and clinician review"); described as a framework / pipeline,
+not an autonomous agent. Preliminary web search (2026-11-27) found no research project, medical software or product of that name; closest were the
+BMJ journal "Thorax" (unrelated), a DIAX "Thorax" X-ray teaching app and a GitHub project "ThoraxGPT / ThoraxBench". Not a trademark clearance.
+Unchanged: package `lung_ct`, repository and directory names, scripts, config keys, evidence IDs, policy versions, schemas, historical runs, packs M1-M16
+and grades, historical change-log entries. New pages carry "ThoraxCheck condition checklist" in the title; packs built earlier keep their titles.
+
+**Comparison**: criteria C1-C7 defined; 12 systems (RadAgent, MedScribe, 3DMedAgent, NV-Reason-CT, EXACT, HoloCT, MedRegion-CT, Reg2RG, EviGround-CT,
+CXRAgent, MedRAX, ThoraxCheck) checked against papers, repositories and model cards. Files: `docs/RELATED_WORK.md` (definitions, notes, change log),
+`docs/related_work/source_matrix.md` (source, location and version per cell), `docs/related_work/comparison_table.md`,
+`docs/images/related_work_comparison.{svg,png}`; generator `scripts/make_comparison_figure.py`. Pipeline figure `docs/images/thoraxcheck_pipeline.{svg,png}`
+(`scripts/make_docs_figures.py`) replaces the Mermaid diagram in the README. No pipeline code, model, threshold or answer changed.

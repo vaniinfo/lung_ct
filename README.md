@@ -1,6 +1,10 @@
-# Lung CT Research
+# ThoraxCheck
 
-A local research tool that reads a 3D chest CT and answers a fixed checklist of 20 findings (present / absent / cannot tell / cannot assess),
+**An evidence-based framework for chest CT assessment and clinician review.**
+
+ThoraxCheck is the public-facing project name. The Python package remains `lung_ct`.
+
+ThoraxCheck is a pipeline with fixed orchestration and explicit decision rules: it reads a 3D chest CT and answers a fixed checklist of 20 findings (present / absent / cannot tell / cannot assess),
 with the evidence behind every answer, on a review page a clinician can grade.
 Research use only: no diagnostic use, no clinical validation claim. Everything runs on one workstation; no scan, mask or report is sent anywhere.
 
@@ -18,43 +22,12 @@ Earlier phases and versions: [docs/README_HISTORY.md](docs/README_HISTORY.md)
 | [docs/RELATED_WORK.md](docs/RELATED_WORK.md), [docs/PAPER_NOVELTY.md](docs/PAPER_NOVELTY.md) | How this compares with other CT agents; candidate contributions |
 | [docs/research/Chest CT model candidates.md](docs/research/Chest%20CT%20model%20candidates.md) | Survey of open chest CT models, with sources |
 
-## How it works: from scan to clinician review
+## How it works: ThoraxCheck, from scan to clinician review
 
 Simplified pipeline · checklist v3_12 · viewer v7. Details: [docs/PIPELINE_FLOW.md](docs/PIPELINE_FLOW.md) (steps, scripts, outputs, decision order),
 [docs/REVIEW_PAGE_FORMAT.md](docs/REVIEW_PAGE_FORMAT.md) (the page), [docs/RELATED_WORK.md](docs/RELATED_WORK.md) (how this compares with other CT agents).
 
-```mermaid
-flowchart LR
-  subgraph S1 [01 INPUT]
-    A["CT scan + quality checks<br/>Validate HU values, check spacing<br/>Orientation from anatomy:<br/>heart left, liver right,<br/>heart in front, trachea above<br/>Only verified scans go on"]
-  end
-  subgraph S2 [02 EVIDENCE]
-    B["TotalSegmentator + measurements<br/>Anatomy, fluid and nodule masks<br/>HU-based dense-lung candidates<br/>Volumes and lobe locations"]
-    C["COLIPRI classifier<br/>Supporting score per condition"]
-    D["NV-Reason-CT reader<br/>Report and yes / no answers"]
-  end
-  subgraph S3 [03 DECISION]
-    E["Checklist rules<br/>Combine the evidence<br/>Apply quality gates<br/>Answer + supporting basis<br/>Cannot tell when unresolved"]
-  end
-  subgraph S4 [04 REVIEW]
-    F["Review page<br/>CT + optional outlines<br/>Answers and reports<br/>Clinician grades, CSV export"]
-  end
-  A --> B
-  A --> C
-  A --> D
-  B --> E
-  C --> E
-  D --> E
-  E --> F
-  G["NV-Segment-CT, display only"] -.-> F
-  style A fill:#e8f0fb,stroke:#b9cdf5,color:#1f2328
-  style B fill:#e8f6ee,stroke:#a9d8b8,color:#1f2328
-  style C fill:#eef0fb,stroke:#c3c9f0,color:#1f2328
-  style D fill:#f3eefc,stroke:#cdbdf0,color:#1f2328
-  style E fill:#17375e,stroke:#17375e,color:#ffffff
-  style F fill:#fff3df,stroke:#e6cf8a,color:#1f2328
-  style G fill:#ffffff,stroke:#d5d9de,color:#4f5a66
-```
+![ThoraxCheck: from scan to clinician review](docs/images/thoraxcheck_pipeline.png)
 
 1. **Input.** Each CT scan is checked first: are the values real HU, is the voxel spacing right, and is the orientation right from anatomy
    (heart on the patient's left, liver on the right, heart in front, trachea above). Only scans that pass go on; failures are listed, never dropped.
@@ -70,44 +43,43 @@ All steps run locally; how to run them is in [docs/SETUP_AND_RUNNING.md](docs/SE
 
 ## Similar work
 
-How lung_ct compares with published CT agents and grounded CT report models. Full notes, figures and sources: [docs/RELATED_WORK.md](docs/RELATED_WORK.md).
+Reported capabilities of CT interpretation and evidence-review systems, checked against the papers, supplements, repositories and model cards
+(source review date 2026-11-27). Definitions, per-system notes and a change log: [docs/RELATED_WORK.md](docs/RELATED_WORK.md);
+every cell with its source and location: [docs/related_work/source_matrix.md](docs/related_work/source_matrix.md).
 
-![Comparison of lung_ct with related systems](docs/images/related_work_comparison.png)
+![Reported capabilities of CT interpretation and evidence-review systems](docs/images/related_work_comparison.png)
 
-Green box = has it; orange label = partly; empty box = not described in the paper (not the same as "does not have it").
+**Not reported does not mean absent.** "Implemented" (ThoraxCheck) means present in our code and run records, not validated.
+More implemented features do not make a system more accurate or clinically superior.
 
 ### The two closest
 
-**[RadAgent](https://arxiv.org/abs/2604.15231)** (arXiv 2604.15231) is the most similar idea. A language model calls tools step by step: TotalSegmentator, an effusion segmenter,
-the CT-CLIP classifier and CT-Chat. It writes a report and keeps a trace you can inspect. The difference is that the language model decides
-everything, and the CT-CLIP classifier gets a full vote. It takes no measurements and never says "can't tell". It also runs on 8 large GPUs.
-Think of it as a smart intern who uses tools well but always gives an answer.
+**[RadAgent](https://arxiv.org/abs/2604.15231)** (arXiv 2604.15231) is the most similar idea. A Qwen3-14B language model calls tools step by step:
+TotalSegmentator-based segmentation, the CT-CLIP classifier, CT-Chat and a slice question-answering model. It writes a report and keeps a trace you can
+inspect. The language model decides everything; its segmentation tools return masks but no volumes, HU values or sizes; it has no designed "cannot tell"
+state; it is reported on eight GPUs on two nodes.
 
-**[MedScribe](https://arxiv.org/abs/2605.01779)** (arXiv 2605.01779) is the closest on measurements. It turns TotalSegmentator masks into about 86 numbers: volumes, HU averages
-and left / right fractions. It runs locally on Llama 3.1-8B and scores a macro-F1 of about 0.32 on CT-RATE. But the final language model still
-decides, with no abstention and no citations inside the report.
+**[MedScribe](https://arxiv.org/abs/2605.01779)** (arXiv 2605.01779) is the closest on measurements. It turns TotalSegmentator masks into 86-dimensional
+features (volumes, extent, left / right fractions, HU statistics) and reasons over them with Llama 3.1-8B, reaching a macro-F1 of about 0.32 on CT-RATE.
+A language model still makes the final call, without an unresolved state or per-claim links to the features; it is reported on one H100.
 
-### What none of the papers we found do
+Finding-level evidence links (one predicted mask per reported finding) are documented in HoloCT and EviGround-CT; mask-derived measurements in MedScribe,
+3DMedAgent and MedRegion-CT.
 
-- Fixed rules make the final call from measurements; no language model decides an answer.
-- The checklist has separate "cannot tell" and "cannot assess" answers.
-- Quality gates block a call when image noise, lung inflation or contrast make it unsafe.
-- A classifier score alone never decides. Since checklist_v3_5 it cannot make anything "absent"; since checklist_v3_12 it can count towards
-  "present" only as the second vote next to the AI reader, for three conditions, at cut-offs checked on held-apart scans.
-- Every answer names the evidence rows (E-numbers) it rests on. When a language model writes the report, a validator checks that every finding
-  cites existing evidence IDs and that every number in it comes from a cited row (`src/lung_ct/agent/report.py`); the review pages use the rule-based report.
+### Positioning
+
+ThoraxCheck combines quantitative CT evidence, explicit condition-specific decision rules, recorded uncertainty and structured clinician review.
+Its contribution must be established through evaluation of assessment reliability and traceability, rather than through feature coverage alone.
 
 ### Honest critique
 
-- **We are not more accurate yet.** Our recall is low (for example 15 of 63 findings found on test20b), and our development sets are about
-  20 patients each, against their thousands. Reviewers will ask for F1 on the full CT-RATE validation set next to MedScribe and NV-Reason-CT.
-  Our newness is in safety and traceability, not in scores.
-- **"Not described" is not "not done".** The comparison is from reading the papers, not their code. Commercial tools (for example Aidence,
-  Coreline, Siemens AI-Rad) and GitHub projects were not searched. Commercial products measure emphysema and calcium routinely, so
-  "measures from masks" alone is not new.
-- **Measurements are getting common.** MedScribe and 3DMedAgent already feed volumes and HU to a language model. Our real claim is narrower:
-  deterministic rules plus abstention.
-- **Two items in the grid are not fully checked:** MedScribe's calcium and heart-size features at code level, and the full text of the NV-Reason-CT paper.
+- **We are not more accurate yet.** Recall against report labels is low (for example 15 of 63 findings found on test20b), and our development sets are
+  about 20 to 400 patients from one hospital. No F1 on the full CT-RATE validation set has been computed for comparison with MedScribe or NV-Reason-CT.
+- **Implemented is not validated.** The rules, cut-offs and quality gates were set on development scans; the evidence items come from one segmentation and
+  are not statistically independent.
+- **"Not reported" is not "not done".** We read papers and, where public, repositories; commercial tools (for example Siemens AI-Rad Companion, Aidence,
+  Coreline) were not reviewed, and they measure emphysema and calcium routinely.
+- **Open source questions** are listed in [docs/RELATED_WORK.md](docs/RELATED_WORK.md) (section 7).
 
 ## What runs today
 

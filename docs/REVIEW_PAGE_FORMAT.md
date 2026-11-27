@@ -1,4 +1,4 @@
-# Review page format (standard for every page sent to a reader)
+# ThoraxCheck review page format (standard for every page sent to a reader)
 
 Status: **fixed 2026-11-27** by the project lead. Every review page is built with `scripts/build_viewer_page.py`
 (through `scripts/build_policy_pack.py` for packs) and must look and behave as described here.
@@ -31,7 +31,7 @@ pages that go to readers.
 
 ## 3. Panel (right), top to bottom
 
-1. **Title**: `<scan> — condition checklist`; grey line: research use only, scan type, checklist version, report source,
+1. **Title**: `<scan> — ThoraxCheck condition checklist` (pages built before 2026-11-27 read `<scan> — condition checklist`); grey line: research use only, scan type, checklist version, report source,
    "patient's right is on the image left", viewer build, form version.
 2. **Answer policy box** (blue): which checklist version the page shows and what its rules mean, in plain words.
 3. **How to read this page** (yellow): where-first, regions are HU-selected, Numbers buttons, Measurement panel,
@@ -86,3 +86,4 @@ in the repository (public); pages live in `runs/` (not in the repository).
 - 2026-11-27 v1.1 (approved with checklist_v3_12): the policy box and the pack index describe the v3_12 rule (two sources for 'present';
   no 'suggested by segmentation'); the AI reader line reads "used for this answer" where the two-source rule used it. Layout, viewer,
   columns and grading form unchanged.
+- 2026-11-27 v1.2 (project lead): public name ThoraxCheck in the page title and the pack index title. Nothing else changed. Packs built earlier keep their old titles.

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="660" viewBox="0 0 1500 660" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5b6b82"/></marker></defs>
+<rect width="1500" height="660" fill="#f7f9fc"/>
+<text x="60" y="64" font-size="32" font-weight="700" fill="#17375e">ThoraxCheck: from scan to clinician review</text>
+<text x="60" y="96" font-size="17" fill="#5b6b82">Evidence-based framework for chest CT assessment · simplified pipeline · checklist v3_12 · viewer v7</text>
+<text x="60" y="150" font-size="14" font-weight="700" letter-spacing="2" fill="#5b6b82">01 INPUT</text>
+<text x="420" y="150" font-size="14" font-weight="700" letter-spacing="2" fill="#5b6b82">02 EVIDENCE</text>
+<text x="830" y="150" font-size="14" font-weight="700" letter-spacing="2" fill="#5b6b82">03 DECISION</text>
+<text x="1180" y="150" font-size="14" font-weight="700" letter-spacing="2" fill="#5b6b82">04 REVIEW</text>
+<rect x="60" y="175" width="280" height="340" rx="14" fill="#e8f0fb" stroke="#b9cdf5" stroke-width="1.5"/>
+<text x="80" y="209" font-size="18" font-weight="700" fill="#1f2328">CT scan + quality checks</text>
+<text x="80" y="231" font-size="15" font-weight="700" fill="#1f2328">Image values and geometry</text>
+<text x="80" y="253" font-size="15" font-weight="400" fill="#1f2328">HU values validated</text>
+<text x="80" y="275" font-size="15" font-weight="400" fill="#1f2328">Slice spacing checked</text>
+<text x="80" y="297" font-size="15" font-weight="700" fill="#1f2328">Orientation from anatomy</text>
+<text x="80" y="319" font-size="15" font-weight="400" fill="#1f2328">Heart left, liver right</text>
+<text x="80" y="341" font-size="15" font-weight="400" fill="#1f2328">Heart in front, trachea above</text>
+<text x="80" y="363" font-size="15" font-weight="700" fill="#1f2328">Only verified scans go on</text>
+<text x="80" y="385" font-size="15" font-weight="400" fill="#1f2328">Failures are listed</text>
+<rect x="420" y="175" width="340" height="125" rx="14" fill="#e8f6ee" stroke="#a9d8b8" stroke-width="1.5"/>
+<text x="440" y="209" font-size="18" font-weight="700" fill="#14532d">TotalSegmentator + measurements</text>
+<text x="440" y="231" font-size="15" font-weight="400" fill="#14532d">Organ, fluid and nodule masks</text>
+<text x="440" y="253" font-size="15" font-weight="400" fill="#14532d">Volumes, HU ranges, lobe locations</text>
+<rect x="420" y="320" width="340" height="95" rx="14" fill="#eef0fb" stroke="#c3c9f0" stroke-width="1.5"/>
+<text x="440" y="354" font-size="18" font-weight="700" fill="#1e3a8a">COLIPRI classifier</text>
+<text x="440" y="376" font-size="15" font-weight="400" fill="#1e3a8a">Supporting score per condition</text>
+<rect x="420" y="435" width="340" height="95" rx="14" fill="#f3eefc" stroke="#cdbdf0" stroke-width="1.5"/>
+<text x="440" y="469" font-size="18" font-weight="700" fill="#4c1d95">NV-Reason-CT reader</text>
+<text x="440" y="491" font-size="15" font-weight="400" fill="#4c1d95">Report and yes / no answers</text>
+<rect x="830" y="235" width="290" height="230" rx="14" fill="#17375e" stroke="#17375e" stroke-width="1.5"/>
+<text x="850" y="269" font-size="18" font-weight="700" fill="#ffffff">Checklist rules</text>
+<text x="850" y="291" font-size="15" font-weight="400" fill="#ffffff">Combine the evidence</text>
+<text x="850" y="313" font-size="15" font-weight="400" fill="#ffffff">Apply quality gates</text>
+<text x="850" y="335" font-size="15" font-weight="400" fill="#ffffff">Answer + its basis</text>
+<text x="850" y="357" font-size="15" font-weight="400" fill="#ffffff">&quot;Cannot tell&quot; when unresolved</text>
+<rect x="1180" y="235" width="270" height="230" rx="14" fill="#fff3df" stroke="#e6cf8a" stroke-width="1.5"/>
+<text x="1200" y="269" font-size="18" font-weight="700" fill="#78350f">Review page</text>
+<text x="1200" y="291" font-size="15" font-weight="400" fill="#78350f">CT with optional outlines</text>
+<text x="1200" y="313" font-size="15" font-weight="400" fill="#78350f">Answers and reports</text>
+<text x="1200" y="335" font-size="15" font-weight="700" fill="#78350f">Clinician grades</text>
+<text x="1200" y="357" font-size="15" font-weight="400" fill="#78350f">Saved as CSV</text>
+<rect x="760" y="565" width="290" height="58" rx="14" fill="#ffffff" stroke="#d5d9de" stroke-width="1.5"/>
+<text x="780" y="599" font-size="18" font-weight="700" fill="#4f5a66">NV-Segment-CT: display only</text>
+<path d="M340,345 L375,345" stroke="#5b6b82" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+<path d="M375,237 L375,482" stroke="#5b6b82" stroke-width="2" fill="none"/>
+<path d="M375,237 L416,237" stroke="#5b6b82" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+<path d="M375,367 L416,367" stroke="#5b6b82" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+<path d="M375,482 L416,482" stroke="#5b6b82" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+<path d="M760,237 L790,237 L790,330" stroke="#5b6b82" stroke-width="2" fill="none"/>
+<path d="M760,367 L826,350" stroke="#5b6b82" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+<path d="M760,482 L790,482 L790,370" stroke="#5b6b82" stroke-width="2" fill="none"/>
+<path d="M790,330 L826,330" stroke="#5b6b82" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+<path d="M790,370 L826,370" stroke="#5b6b82" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+<path d="M1120,350 L1176,350" stroke="#5b6b82" stroke-width="2" fill="none" marker-end="url(#ah)"/>
+<path d="M1050,594 L1315,594 L1315,470" stroke="#5b6b82" stroke-width="2" fill="none" stroke-dasharray="6 6" marker-end="url(#ah)"/>
+</svg>
