@@ -148,7 +148,7 @@ def main() -> int:
                  f"<span class='m open'>open {tally['open']}</span>")
     page = f"""<!DOCTYPE html><html><head><meta charset='utf-8'><title>Checklist review - {E(ev['case_id'])}</title>
 <style>{CSS}</style></head><body><div class='page'>
-<header><h1>Lung CT condition checklist &mdash; {E(ev['case_id'])}</h1><div>{summ}</div>
+<header><h1>ThoraxCheck condition checklist &mdash; {E(ev['case_id'])}</h1><div>{summ}</div>
 <span class='muted'>Research use only &middot; scan type: {E(chk['scan_type'])} &middot; {E(chk['config_version'])} (provisional thresholds) &middot; run {E(run.name)} &middot; report writer: {E(fr['source'])}</span></header>
 <div class='col'>
  <div class='card'><h2>What the measurements see</h2><img src='data:image/png;base64,{img}'></div>

@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1484" height="1088" viewBox="0 0 1484 1088" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect width="1484" height="1088" fill="#ffffff"/>
+<text x="24" y="40" font-size="22" font-weight="700" fill="#1f2328">Reported capabilities of CT interpretation and evidence-review systems</text>
+<text x="24" y="66" font-size="13" fill="#4f5a66">Sources reviewed 2026-11-27. Statuses follow the definitions in docs/RELATED_WORK.md; details and locations in docs/related_work/source_matrix.md.</text>
+<text x="336.0" y="104" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">Measurements from</text>
+<text x="336.0" y="120" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">predicted masks</text>
+<text x="336.0" y="142" font-size="11" text-anchor="middle" fill="#6b7480">C1</text>
+<text x="508.0" y="96" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">Versioned</text>
+<text x="508.0" y="112" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">per-condition</text>
+<text x="508.0" y="128" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">rules</text>
+<text x="508.0" y="142" font-size="11" text-anchor="middle" fill="#6b7480">C2</text>
+<text x="680.0" y="104" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">Unresolved state</text>
+<text x="680.0" y="120" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">with reason</text>
+<text x="680.0" y="142" font-size="11" text-anchor="middle" fill="#6b7480">C3</text>
+<text x="852.0" y="104" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">Image-quality</text>
+<text x="852.0" y="120" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">checks in rules</text>
+<text x="852.0" y="142" font-size="11" text-anchor="middle" fill="#6b7480">C4</text>
+<text x="1024.0" y="104" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">Claims linked to</text>
+<text x="1024.0" y="120" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">evidence</text>
+<text x="1024.0" y="142" font-size="11" text-anchor="middle" fill="#6b7480">C5</text>
+<text x="1196.0" y="104" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">End-to-end on one</text>
+<text x="1196.0" y="120" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">24 GB GPU</text>
+<text x="1196.0" y="142" font-size="11" text-anchor="middle" fill="#6b7480">C6</text>
+<text x="1368.0" y="96" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">Structured</text>
+<text x="1368.0" y="112" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">clinician grading</text>
+<text x="1368.0" y="128" font-size="13" font-weight="700" text-anchor="middle" fill="#1f2328">UI</text>
+<text x="1368.0" y="142" font-size="11" text-anchor="middle" fill="#6b7480">C7</text>
+<rect x="16" y="150" width="1452" height="30" fill="#f7f8fa"/>
+<text x="24" y="170" font-size="12" font-weight="700" letter-spacing="1" fill="#4f5a66">THIS WORK</text>
+<line x1="16" y1="180" x2="1468" y2="180" stroke="#e3e6ea"/>
+<text x="24" y="203" font-size="14" font-weight="700" fill="#1f2328">ThoraxCheck (ours)</text>
+<text x="24" y="221" font-size="11" fill="#6b7480">Complete pipeline, CT, 2026</text>
+<rect x="254" y="186" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="336.0" y="205" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Implemented</text>
+<rect x="426" y="186" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="508.0" y="205" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Implemented</text>
+<rect x="598" y="186" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="680.0" y="205" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Implemented</text>
+<rect x="770" y="186" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="852.0" y="205" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Implemented</text>
+<rect x="942" y="186" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="1024.0" y="205" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Implemented</text>
+<rect x="1114" y="186" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="1196.0" y="205" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Implemented</text>
+<rect x="1286" y="186" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="1368.0" y="205" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Implemented</text>
+<rect x="16" y="234" width="1452" height="30" fill="#f7f8fa"/>
+<text x="24" y="254" font-size="12" font-weight="700" letter-spacing="1" fill="#4f5a66">CT SYSTEMS AND AGENTS</text>
+<line x1="16" y1="264" x2="1468" y2="264" stroke="#e3e6ea"/>
+<text x="24" y="287" font-size="14" font-weight="700" fill="#1f2328">RadAgent</text>
+<text x="24" y="305" font-size="11" fill="#6b7480">Complete system, CT, 2026</text>
+<rect x="254" y="270" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="336.0" y="289" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="426" y="270" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="289" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="270" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="289" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="270" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="289" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="270" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1024.0" y="289" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1024.0" y="304" font-size="10" text-anchor="middle" fill="#4f5a66">trace only</text>
+<rect x="1114" y="270" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="289" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="270" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1368.0" y="289" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<line x1="16" y1="318" x2="1468" y2="318" stroke="#e3e6ea"/>
+<text x="24" y="341" font-size="14" font-weight="700" fill="#1f2328">MedScribe</text>
+<text x="24" y="359" font-size="11" fill="#6b7480">Complete system, CT, 2026</text>
+<rect x="254" y="324" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="336.0" y="343" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Documented</text>
+<rect x="426" y="324" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="343" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="324" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="343" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="324" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="343" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="324" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1024.0" y="343" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1024.0" y="358" font-size="10" text-anchor="middle" fill="#4f5a66">claimed, not per claim</text>
+<rect x="1114" y="324" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="343" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="324" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1368.0" y="343" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<line x1="16" y1="372" x2="1468" y2="372" stroke="#e3e6ea"/>
+<text x="24" y="395" font-size="14" font-weight="700" fill="#1f2328">3DMedAgent</text>
+<text x="24" y="413" font-size="11" fill="#6b7480">Complete system, CT and other 3D, ICML 2026</text>
+<rect x="254" y="378" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="336.0" y="397" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Documented</text>
+<rect x="426" y="378" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="397" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="378" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="397" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="378" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="397" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="378" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1024.0" y="397" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1024.0" y="412" font-size="10" text-anchor="middle" fill="#4f5a66">evidence per step</text>
+<rect x="1114" y="378" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="397" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="378" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1368.0" y="397" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="16" y="426" width="1452" height="30" fill="#f7f8fa"/>
+<text x="24" y="446" font-size="12" font-weight="700" letter-spacing="1" fill="#4f5a66">CT MODELS (STANDALONE)</text>
+<line x1="16" y1="456" x2="1468" y2="456" stroke="#e3e6ea"/>
+<text x="24" y="479" font-size="14" font-weight="700" fill="#1f2328">NV-Reason-CT</text>
+<text x="24" y="497" font-size="11" fill="#6b7480">Standalone model, chest and abdominal CT, ...</text>
+<rect x="254" y="462" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="336.0" y="481" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="426" y="462" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="481" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="462" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="680.0" y="481" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="680.0" y="496" font-size="10" text-anchor="middle" fill="#4f5a66">free-text uncertainty</text>
+<rect x="770" y="462" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="481" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="462" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1024.0" y="481" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1024.0" y="496" font-size="10" text-anchor="middle" fill="#4f5a66">trace only</text>
+<rect x="1114" y="462" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="481" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="462" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1368.0" y="481" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1368.0" y="496" font-size="10" text-anchor="middle" fill="#4f5a66">rating study, no grading UI</text>
+<line x1="16" y1="510" x2="1468" y2="510" stroke="#e3e6ea"/>
+<text x="24" y="533" font-size="14" font-weight="700" fill="#1f2328">EXACT</text>
+<text x="24" y="551" font-size="11" fill="#6b7480">Standalone model, chest CT, 2026</text>
+<rect x="254" y="516" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="336.0" y="535" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="426" y="516" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="535" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="516" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="535" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="516" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="535" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="516" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1024.0" y="535" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1024.0" y="550" font-size="10" text-anchor="middle" fill="#4f5a66">one map per disease</text>
+<rect x="1114" y="516" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="535" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="516" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1368.0" y="535" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<line x1="16" y1="564" x2="1468" y2="564" stroke="#e3e6ea"/>
+<text x="24" y="587" font-size="14" font-weight="700" fill="#1f2328">HoloCT</text>
+<text x="24" y="605" font-size="11" fill="#6b7480">Standalone model, CT, 2026</text>
+<rect x="254" y="570" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="336.0" y="589" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="426" y="570" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="589" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="570" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="589" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="570" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="589" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="570" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="1024.0" y="589" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Documented</text>
+<rect x="1114" y="570" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="589" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="570" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1368.0" y="589" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="16" y="618" width="1452" height="30" fill="#f7f8fa"/>
+<text x="24" y="638" font-size="12" font-weight="700" letter-spacing="1" fill="#4f5a66">CT REPORT-GENERATION MODELS</text>
+<line x1="16" y1="648" x2="1468" y2="648" stroke="#e3e6ea"/>
+<text x="24" y="671" font-size="14" font-weight="700" fill="#1f2328">MedRegion-CT</text>
+<text x="24" y="689" font-size="11" fill="#6b7480">Report-generation model, CT, ECCV 2026</text>
+<rect x="254" y="654" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="336.0" y="673" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Documented</text>
+<rect x="426" y="654" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="673" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="654" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="673" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="654" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="673" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="654" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1024.0" y="673" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1114" y="654" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="673" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="654" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1368.0" y="673" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<line x1="16" y1="702" x2="1468" y2="702" stroke="#e3e6ea"/>
+<text x="24" y="725" font-size="14" font-weight="700" fill="#1f2328">Reg2RG</text>
+<text x="24" y="743" font-size="11" fill="#6b7480">Report-generation model, CT, 2024-25</text>
+<rect x="254" y="708" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="336.0" y="727" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="426" y="708" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="727" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="708" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="727" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="708" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="727" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="708" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1024.0" y="727" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1024.0" y="742" font-size="10" text-anchor="middle" fill="#4f5a66">region-level masks</text>
+<rect x="1114" y="708" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="727" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="708" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1368.0" y="727" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="16" y="756" width="1452" height="30" fill="#f7f8fa"/>
+<text x="24" y="776" font-size="12" font-weight="700" letter-spacing="1" fill="#4f5a66">POST-GENERATION VERIFICATION</text>
+<line x1="16" y1="786" x2="1468" y2="786" stroke="#e3e6ea"/>
+<text x="24" y="809" font-size="14" font-weight="700" fill="#1f2328">EviGround-CT</text>
+<text x="24" y="827" font-size="11" fill="#6b7480">Verification model, chest CT, BIBM 2026</text>
+<rect x="254" y="792" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="336.0" y="811" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="426" y="792" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="811" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="792" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="811" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="792" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="811" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="792" width="164" height="42" rx="6" fill="#e7ebf0" stroke="#d5d9de"/>
+<text x="1024.0" y="811" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Documented</text>
+<rect x="1114" y="792" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="811" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="792" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1368.0" y="811" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="16" y="840" width="1452" height="30" fill="#f7f8fa"/>
+<text x="24" y="860" font-size="12" font-weight="700" letter-spacing="1" fill="#4f5a66">RELATED APPROACHES: CHEST X-RAY</text>
+<line x1="16" y1="870" x2="1468" y2="870" stroke="#e3e6ea"/>
+<text x="24" y="893" font-size="14" font-weight="700" fill="#1f2328">CXRAgent</text>
+<text x="24" y="911" font-size="11" fill="#6b7480">Complete system, chest X-ray, 2025-26</text>
+<rect x="254" y="876" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="336.0" y="895" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="426" y="876" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="895" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="876" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="680.0" y="895" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="680.0" y="910" font-size="10" text-anchor="middle" fill="#4f5a66">confidence levels</text>
+<rect x="770" y="876" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="895" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="876" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1024.0" y="895" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1024.0" y="910" font-size="10" text-anchor="middle" fill="#4f5a66">per tool statement</text>
+<rect x="1114" y="876" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="895" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="876" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1368.0" y="895" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1368.0" y="910" font-size="10" text-anchor="middle" fill="#4f5a66">comparison, no UI</text>
+<line x1="16" y1="924" x2="1468" y2="924" stroke="#e3e6ea"/>
+<text x="24" y="947" font-size="14" font-weight="700" fill="#1f2328">MedRAX</text>
+<text x="24" y="965" font-size="11" fill="#6b7480">Complete system, chest X-ray, 2025</text>
+<rect x="254" y="930" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="336.0" y="949" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="336.0" y="964" font-size="10" text-anchor="middle" fill="#4f5a66">in repository code only</text>
+<rect x="426" y="930" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="508.0" y="949" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="598" y="930" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="680.0" y="949" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="770" y="930" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="852.0" y="949" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="942" y="930" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1024.0" y="949" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1024.0" y="964" font-size="10" text-anchor="middle" fill="#4f5a66">tool outputs shown</text>
+<rect x="1114" y="930" width="164" height="42" rx="6" fill="#ffffff" stroke="#d5d9de"/>
+<text x="1196.0" y="949" font-size="12" font-weight="600" text-anchor="middle" fill="#6b7480">Not reported</text>
+<rect x="1286" y="930" width="164" height="42" rx="6" fill="#f4f5f7" stroke="#d5d9de"/>
+<text x="1368.0" y="949" font-size="12" font-weight="600" text-anchor="middle" fill="#1f2328">Partial</text>
+<text x="1368.0" y="964" font-size="10" text-anchor="middle" fill="#4f5a66">chat UI only</text>
+<line x1="16" y1="978" x2="1468" y2="978" stroke="#e3e6ea"/>
+<text x="24" y="1012" font-size="12" fill="#1f2328"><tspan font-weight="700">Implemented</tspan>: in our code and run records (not a validation). <tspan font-weight="700">Documented</tspan>: the source shows it. <tspan font-weight="700">Partial</tspan>: only the named part is shown. <tspan font-weight="700">Not reported</tspan>: not described in the examined sources.</text>
+<text x="24" y="1034" font-size="12" font-weight="700" fill="#1f2328">Not reported does not mean absent. More features do not mean better or clinically superior.</text>
+</svg>

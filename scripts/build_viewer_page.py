@@ -608,7 +608,7 @@ tr.jump:hover .show{{background:#1a56c4}}
  <div id="loc">Scroll: next/previous slice &middot; click: move cross-hair &middot; right-drag: brightness/contrast</div>
 </div>
 <div class="side">
- <h1>{E(ev['case_id'])} &mdash; condition checklist</h1>
+ <h1>{E(ev['case_id'])} &mdash; ThoraxCheck condition checklist</h1>
  <div class="muted">Research use only &middot; scan type: {E(chk['scan_type'])} &middot; {E(chk['config_version'])} (provisional) &middot; report: {E(src)} &middot; patient's right is on the image left{build_note}</div>
  {tip_html}
  <div class="card"><button id="whybtn" class="whybtn{ao}" onclick="var t=document.getElementById('chk');this.textContent=t.classList.toggle('hidewhy')?'Show what it means / why':'Hide what it means / why'">Show what it means / why</button><table id="chk" class="hidewhy">{head_html}{rows_html}</table></div>

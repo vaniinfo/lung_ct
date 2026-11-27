@@ -1,5 +1,7 @@
 # Project Plan — Grounded Lung CT Diagnosis Agent
 
+> Public project name since 2026-11-27: **ThoraxCheck**, an evidence-based framework for chest CT assessment and clinician review (Python package `lung_ct`). The title above and the revision log are kept as written; the current flow is in [PIPELINE_FLOW.md](PIPELINE_FLOW.md).
+
 Living document. Update it after each professor / clinician meeting: add a row to the
 revision log, change task status, and move settled items out of "Open questions".
 Day-to-day technical progress stays in `docs/STATUS.md`; this file holds direction and scope.

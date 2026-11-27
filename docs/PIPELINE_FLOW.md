@@ -1,4 +1,4 @@
-# Pipeline flow (current)
+# ThoraxCheck pipeline flow (current)
 
 Status: written 2026-11-27 for checklist_v3_12 and viewer v7. This file is the one place that says how a scan becomes a review page.
 `docs/HANDOFF.md` ("Pipeline") describes the flow of 2026-11-17 and is kept as history. The page itself is defined in
